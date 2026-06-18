@@ -97,9 +97,8 @@ function LayerItem({ id, nodes, depth, parentId, index, siblingCount }: LayerIte
         <span
           {...listeners}
           {...attributes}
-          className="text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing text-[11px] shrink-0 select-none"
-          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
+          className="text-zinc-600 hover:text-zinc-400 cursor-grab active:cursor-grabbing text-[11px] shrink-0 select-none"
         >
           ⠿
         </span>

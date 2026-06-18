@@ -83,7 +83,7 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
         if (overData.isLayerDrop) {
           const { parentId, index } = overData
           const nodeId = active.data.current.nodeId as string
-          if (nodeId !== over.id) moveNode(nodeId, parentId, index)
+          if (nodeId !== parentId) moveNode(nodeId, parentId, index)
         }
         return
       }
