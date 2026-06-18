@@ -99,10 +99,16 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
     [addNode, moveNode]
   )
 
-  const dragLabel =
-    draggingType != null
-      ? (registry[draggingType]?.label ?? draggingType)
-      : ""
+  const dragLabel = (() => {
+    if (draggingType != null) return registry[draggingType]?.label ?? draggingType
+    if (draggingId != null) {
+      const state = useBuilderStore.getState()
+      const page = state.pages.find((p) => p.id === state.currentPageId)
+      const nodeType = page?.nodes[draggingId]?.type
+      if (nodeType) return registry[nodeType]?.label ?? nodeType
+    }
+    return ""
+  })()
 
   return (
     <DragStateContext.Provider value={{ isDraggingAny, draggingLabel: dragLabel, draggingIsPanel }}>
