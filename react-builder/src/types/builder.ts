@@ -1,3 +1,5 @@
+import type React from "react"
+
 export type PropType = "string" | "number" | "boolean" | "color" | "select" | "textarea"
 
 export interface PropSchema {
@@ -18,7 +20,9 @@ export interface ComponentNode {
 export interface ComponentDefinition {
   type: string
   label: string
-  icon: string
+  /** A react-icons component, e.g. RiLayoutLine */
+  icon: React.ElementType
+  description?: string
   category: "layout" | "ui" | "form" | "zalo"
   propSchema: Record<string, PropSchema>
   defaultProps: Record<string, unknown>

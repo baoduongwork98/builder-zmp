@@ -17,7 +17,7 @@ function makeComponentName(pageName: string, usedNames: Set<string>): string {
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join("") || "Page"
 
-  let candidate = `${base}Page`
+  const candidate = `${base}Page`
   if (!usedNames.has(candidate)) {
     usedNames.add(candidate)
     return candidate
