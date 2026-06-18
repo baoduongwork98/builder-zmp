@@ -110,6 +110,10 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
     return ""
   })()
 
+  const DragIcon = draggingType && registry[draggingType]
+    ? (registry[draggingType]!.icon as React.FC<{ size?: number }>)
+    : null
+
   return (
     <DragStateContext.Provider value={{ isDraggingAny, draggingLabel: dragLabel, draggingIsPanel }}>
       <DndContext
@@ -122,7 +126,7 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
         <DragOverlay dropAnimation={null}>
           {draggingType && (
             <div className="bg-white border-2 border-[#0068FF] rounded-xl px-3 py-2 text-sm shadow-2xl flex items-center gap-2 pointer-events-none min-w-[120px]">
-              <span className="text-base">{registry[draggingType]?.icon}</span>
+              {DragIcon && <DragIcon size={16} />}
               <div className="flex flex-col">
                 <span className="font-semibold text-zinc-800 text-[11px] leading-tight">
                   {registry[draggingType]?.label ?? draggingType}

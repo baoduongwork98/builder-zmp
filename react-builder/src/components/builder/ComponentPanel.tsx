@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import { useDraggable } from "@dnd-kit/core"
 import { registry, categoryOrder } from "@/registry/index"
 import { ComponentDefinition } from "@/types/builder"
@@ -106,7 +106,7 @@ function DraggableComponentItem({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={onLeave}
       className={cn(
-        "flex flex-col items-center gap-2 p-3 rounded-lg cursor-grab select-none transition-all duration-150",
+        "group flex flex-col items-center gap-2 p-3 rounded-lg cursor-grab select-none transition-all duration-150",
         "bg-[#1E1E24] border border-[#2A2A32]",
         "hover:border-[#0068FF]/50 hover:bg-[#1A1D2E]",
         isDragging && "opacity-40 cursor-grabbing scale-95"
@@ -135,6 +135,12 @@ export function ComponentPanel() {
     y: number
   } | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [])
 
   function showTooltip(def: ComponentDefinition, y: number) {
     if (timerRef.current) clearTimeout(timerRef.current)

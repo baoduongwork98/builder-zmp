@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { useDraggable, useDroppable } from "@dnd-kit/core"
 import { useBuilderStore, selectCurrentPage } from "@/store/builderStore"
 import { ComponentNode } from "@/types/builder"
@@ -45,6 +46,7 @@ function LayerItem({ id, nodes, depth, parentId, index, siblingCount }: LayerIte
   const node = nodes[id]
   const def = registry[node?.type ?? ""]
   const isSelected = selectedId === id
+  const IconComp = def ? (def.icon as React.FC<{ size?: number; className?: string }>) : null
 
   const { attributes, listeners, setNodeRef: setDragRef, isDragging } = useDraggable({
     id: `layer__${id}`,
@@ -103,7 +105,7 @@ function LayerItem({ id, nodes, depth, parentId, index, siblingCount }: LayerIte
           ⠿
         </span>
 
-        <span className="text-sm leading-none opacity-60 shrink-0">{def?.icon ?? "□"}</span>
+        {IconComp ? <IconComp size={14} className="opacity-60 shrink-0" /> : <span className="text-sm leading-none opacity-60 shrink-0">□</span>}
         <span className="flex-1 font-medium truncate tracking-tight">{node.type}</span>
         <button
           onClick={(e) => {
