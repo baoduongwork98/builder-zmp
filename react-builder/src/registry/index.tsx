@@ -1,4 +1,21 @@
 import { JSX } from "react"
+import {
+  RiLayoutLine,
+  RiMenuLine,
+  RiApps2Line,
+  RiSquareLine,
+  RiListUnordered,
+  RiUserLine,
+  RiPriceTag3Line,
+  RiCursorLine,
+  RiInputMethodLine,
+  RiSearchLine,
+  RiLayoutRowLine,
+  RiLayoutColumnLine,
+  RiLayoutBottomLine,
+  RiFileTextLine,
+  RiImageLine,
+} from "react-icons/ri"
 import { ComponentDefinition } from "@/types/builder"
 
 const ind = (n: number) => "  ".repeat(n)
@@ -8,7 +25,8 @@ const ind = (n: number) => "  ".repeat(n)
 const textDef: ComponentDefinition = {
   type: "Text",
   label: "Text",
-  icon: "T",
+  icon: RiFileTextLine,
+  description: "Khối văn bản tùy chỉnh — tiêu đề, đoạn văn, span",
   category: "ui",
   acceptsChildren: false,
   zmpComponent: "Text",
@@ -42,7 +60,8 @@ const textDef: ComponentDefinition = {
 const imageDef: ComponentDefinition = {
   type: "Image",
   label: "Image",
-  icon: "🖼",
+  icon: RiImageLine,
+  description: "Hình ảnh với tùy chọn bo góc và object-fit",
   category: "ui",
   acceptsChildren: false,
   zmpImports: [],
@@ -71,7 +90,8 @@ const imageDef: ComponentDefinition = {
 const stackDef: ComponentDefinition = {
   type: "Stack",
   label: "Stack",
-  icon: "☰",
+  icon: RiLayoutColumnLine,
+  description: "Container xếp chồng dọc hoặc ngang với gap tùy chỉnh",
   category: "layout",
   acceptsChildren: true,
   zmpImports: ["Box"],
@@ -106,7 +126,8 @@ const stackDef: ComponentDefinition = {
 const dividerDef: ComponentDefinition = {
   type: "Divider",
   label: "Divider",
-  icon: "—",
+  icon: RiLayoutBottomLine,
+  description: "Đường kẻ phân cách giữa các phần nội dung",
   category: "layout",
   acceptsChildren: false,
   zmpImports: [],
@@ -137,7 +158,8 @@ const dividerDef: ComponentDefinition = {
 const zaloBtnDef: ComponentDefinition = {
   type: "ZaloButton",
   label: "Button",
-  icon: "🔵",
+  icon: RiCursorLine,
+  description: "Nút bấm với kiểu primary, secondary hoặc tertiary",
   category: "zalo",
   acceptsChildren: false,
   zmpComponent: "Button",
@@ -171,7 +193,8 @@ const zaloBtnDef: ComponentDefinition = {
 const zaloInputDef: ComponentDefinition = {
   type: "ZaloInput",
   label: "Input",
-  icon: "✏️",
+  icon: RiInputMethodLine,
+  description: "Ô nhập liệu có label, placeholder và validation",
   category: "zalo",
   acceptsChildren: false,
   zmpComponent: "Input",
@@ -207,7 +230,8 @@ const zaloInputDef: ComponentDefinition = {
 const zaloHeaderDef: ComponentDefinition = {
   type: "ZaloHeader",
   label: "Header",
-  icon: "🔝",
+  icon: RiMenuLine,
+  description: "Thanh tiêu đề cố định trên cùng của trang ZMP",
   category: "zalo",
   acceptsChildren: false,
   zmpComponent: "Header",
@@ -241,7 +265,8 @@ const zaloHeaderDef: ComponentDefinition = {
 const zaloBottomNavDef: ComponentDefinition = {
   type: "ZaloBottomNav",
   label: "BottomNav",
-  icon: "⬛",
+  icon: RiApps2Line,
+  description: "Thanh điều hướng dưới cùng với tối đa 3 tab",
   category: "zalo",
   acceptsChildren: false,
   zmpComponent: "BottomNavigation",
@@ -302,7 +327,8 @@ const zaloBottomNavDef: ComponentDefinition = {
 const zaloCardDef: ComponentDefinition = {
   type: "ZaloCard",
   label: "Card",
-  icon: "🃏",
+  icon: RiSquareLine,
+  description: "Khung card nền trắng có bo góc và shadow",
   category: "zalo",
   acceptsChildren: true,
   zmpComponent: "Box",
@@ -337,7 +363,8 @@ const zaloCardDef: ComponentDefinition = {
 const zaloListItemDef: ComponentDefinition = {
   type: "ZaloListItem",
   label: "List Item",
-  icon: "≡",
+  icon: RiListUnordered,
+  description: "Mục danh sách với tiêu đề, mô tả và tùy chọn avatar",
   category: "zalo",
   acceptsChildren: false,
   zmpComponent: "List",
@@ -379,7 +406,8 @@ const zaloListItemDef: ComponentDefinition = {
 const zaloAvatarDef: ComponentDefinition = {
   type: "ZaloAvatar",
   label: "Avatar",
-  icon: "👤",
+  icon: RiUserLine,
+  description: "Ảnh đại diện hình tròn với fallback initials",
   category: "zalo",
   acceptsChildren: false,
   zmpComponent: "Avatar",
@@ -429,7 +457,8 @@ const zaloAvatarDef: ComponentDefinition = {
 const zaloTagDef: ComponentDefinition = {
   type: "ZaloTag",
   label: "Tag",
-  icon: "🏷️",
+  icon: RiPriceTag3Line,
+  description: "Nhãn phân loại màu sắc — blue, green, red, v.v.",
   category: "zalo",
   acceptsChildren: false,
   // zmp-ui has no Tag component — render as a plain styled span
@@ -471,7 +500,8 @@ const zaloTagDef: ComponentDefinition = {
 const zaloSearchBarDef: ComponentDefinition = {
   type: "ZaloSearchBar",
   label: "Search",
-  icon: "🔍",
+  icon: RiSearchLine,
+  description: "Thanh tìm kiếm với placeholder tùy chỉnh",
   category: "zalo",
   acceptsChildren: false,
   zmpImports: ["Input"],
@@ -496,7 +526,8 @@ const zaloSearchBarDef: ComponentDefinition = {
 const zaloSectionDef: ComponentDefinition = {
   type: "ZaloSection",
   label: "Section",
-  icon: "§",
+  icon: RiLayoutRowLine,
+  description: "Tiêu đề mục với link 'xem thêm' tùy chọn",
   category: "zalo",
   acceptsChildren: true,
   // No Section in zmp-ui — generates plain HTML with Tailwind
@@ -535,7 +566,8 @@ const zaloSectionDef: ComponentDefinition = {
 const zaloPageDef: ComponentDefinition = {
   type: "ZaloPage",
   label: "Page",
-  icon: "📄",
+  icon: RiLayoutLine,
+  description: "Trang chính của ứng dụng ZMP — wrapper cho toàn bộ nội dung",
   category: "zalo",
   acceptsChildren: true,
   zmpComponent: "Page",
@@ -589,5 +621,5 @@ export const registry: Record<string, ComponentDefinition> = {
   Divider: dividerDef,
 }
 
-export const categoryOrder = ["zalo", "layout", "ui", "form"] as const
+export const categoryOrder = ["zalo", "layout", "ui"] as const
 export type CategoryKey = (typeof categoryOrder)[number]
