@@ -16,8 +16,20 @@ import {
 import { useBuilderStore } from "@/store/builderStore"
 import { registry } from "@/registry/index"
 
-const DragStateContext = createContext({ isDraggingAny: false })
+interface DragState {
+  isDraggingAny: boolean
+  draggingLabel: string
+  draggingIsPanel: boolean
+}
+
+const DragStateContext = createContext<DragState>({
+  isDraggingAny: false,
+  draggingLabel: "",
+  draggingIsPanel: false,
+})
+
 export const useIsDraggingAny = () => useContext(DragStateContext).isDraggingAny
+export const useDragState = () => useContext(DragStateContext)
 
 const collisionDetection: CollisionDetection = (args) => {
   const hits = pointerWithin(args)
@@ -31,6 +43,8 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
 
   const [draggingType, setDraggingType] = useState<string | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [draggingIsPanel, setDraggingIsPanel] = useState(false)
+
   const isDraggingAny = draggingType !== null || draggingId !== null
 
   const sensors = useSensors(
@@ -40,9 +54,16 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event
     if (active.data.current?.isPanel) {
-      setDraggingType(active.data.current.nodeType as string)
+      const nodeType = active.data.current.nodeType as string
+      setDraggingType(nodeType)
+      setDraggingIsPanel(true)
+    } else if (active.data.current?.isLayer) {
+      const nodeId = active.data.current.nodeId as string
+      setDraggingId(nodeId)
+      setDraggingIsPanel(false)
     } else {
       setDraggingId(active.id as string)
+      setDraggingIsPanel(false)
     }
   }, [])
 
@@ -50,10 +71,23 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
     (event: DragEndEvent) => {
       setDraggingType(null)
       setDraggingId(null)
+      setDraggingIsPanel(false)
       const { active, over } = event
       if (!over) return
-      const overData = over.data.current as { parentId: string | null; index: number } | undefined
+      const overData = over.data.current as
+        | { parentId: string | null; index: number; isLayerDrop?: boolean }
+        | undefined
       if (!overData) return
+
+      if (active.data.current?.isLayer) {
+        if (overData.isLayerDrop) {
+          const { parentId, index } = overData
+          const nodeId = active.data.current.nodeId as string
+          if (nodeId !== over.id) moveNode(nodeId, parentId, index)
+        }
+        return
+      }
+
       const { parentId, index } = overData
       if (active.data.current?.isPanel) {
         addNode(active.data.current.nodeType as string, parentId, index)
@@ -65,8 +99,13 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
     [addNode, moveNode]
   )
 
+  const dragLabel =
+    draggingType != null
+      ? (registry[draggingType]?.label ?? draggingType)
+      : ""
+
   return (
-    <DragStateContext.Provider value={{ isDraggingAny }}>
+    <DragStateContext.Provider value={{ isDraggingAny, draggingLabel: dragLabel, draggingIsPanel }}>
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetection}
@@ -76,14 +115,23 @@ export function BuilderDnd({ children }: { children: React.ReactNode }) {
         {children}
         <DragOverlay dropAnimation={null}>
           {draggingType && (
-            <div className="bg-white border border-blue-400 rounded-lg px-3 py-2 text-sm shadow-xl opacity-90 flex items-center gap-2 pointer-events-none">
-              <span>{registry[draggingType]?.icon}</span>
-              <span>{registry[draggingType]?.label ?? draggingType}</span>
+            <div className="bg-white border-2 border-[#0068FF] rounded-xl px-3 py-2 text-sm shadow-2xl flex items-center gap-2 pointer-events-none min-w-[120px]">
+              <span className="text-base">{registry[draggingType]?.icon}</span>
+              <div className="flex flex-col">
+                <span className="font-semibold text-zinc-800 text-[11px] leading-tight">
+                  {registry[draggingType]?.label ?? draggingType}
+                </span>
+                <span className="text-[9px] text-[#0068FF] font-semibold uppercase tracking-wide">Mới</span>
+              </div>
             </div>
           )}
           {draggingId && (
-            <div className="bg-white border border-blue-400 rounded-lg px-3 py-2 text-sm shadow-xl opacity-80 pointer-events-none">
-              Di chuyển...
+            <div className="bg-white border-2 border-zinc-300 rounded-xl px-3 py-2 text-sm shadow-2xl flex items-center gap-2 pointer-events-none min-w-[100px]">
+              <span className="text-zinc-400 text-base">⠿</span>
+              <div className="flex flex-col">
+                <span className="font-semibold text-zinc-800 text-[11px] leading-tight">Di chuyển</span>
+                <span className="text-[9px] text-zinc-400 font-semibold uppercase tracking-wide">Canvas</span>
+              </div>
             </div>
           )}
         </DragOverlay>
