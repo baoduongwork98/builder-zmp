@@ -98,10 +98,12 @@ export function CanvasNode({ id, nodes, depth = 0, isDraggingAny }: CanvasNodePr
         setDragRef(el)
         if (def.acceptsChildren) setDropRef(el)
       }}
+      {...listeners}
+      {...attributes}
       onClick={handleClick}
       className={cn(
         "relative group",
-        isDragging && "opacity-30",
+        isDragging ? "opacity-30 cursor-grabbing" : "cursor-grab",
         isSelected && "outline outline-2 outline-[#0068FF] outline-offset-1 rounded-sm",
         !isSelected && "hover:outline hover:outline-1 hover:outline-[#0068FF]/40 hover:outline-offset-1 hover:rounded-sm",
         def.acceptsChildren && isOver && !isDragging && "ring-2 ring-[#0068FF]/30 ring-inset"
@@ -114,18 +116,12 @@ export function CanvasNode({ id, nodes, depth = 0, isDraggingAny }: CanvasNodePr
             {node.type}
           </span>
           <button
+            onPointerDown={(e) => e.stopPropagation()}
             onClick={handleDelete}
             className="bg-red-500 hover:bg-red-600 text-white text-[9px] px-1.5 py-0.5 rounded-md font-semibold shadow-sm transition-colors"
           >
             Del
           </button>
-          <div
-            {...listeners}
-            {...attributes}
-            className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[9px] px-1.5 py-0.5 rounded-md font-semibold cursor-grab active:cursor-grabbing shadow-sm transition-colors"
-          >
-            Drag
-          </div>
         </div>
       )}
       {rendered}
