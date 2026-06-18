@@ -138,7 +138,7 @@ export function CanvasNode({ id, nodes, depth = 0, isDraggingAny }: CanvasNodePr
         def.acceptsChildren && isDraggingAny && node.children.length === 0 && "min-h-16",
         isSelected && "outline outline-2 outline-[#0068FF] outline-offset-1 rounded-sm",
         !isSelected && "hover:outline hover:outline-1 hover:outline-[#0068FF]/40 hover:outline-offset-1 hover:rounded-sm",
-        def.acceptsChildren && isOver && !isDragging && "outline-2 outline-dashed outline-[#0068FF]/60 bg-[#0068FF]/5 rounded-sm"
+        def.acceptsChildren && isOver && !isDragging && "outline outline-2 outline-dashed outline-[#0068FF]/60 bg-[#0068FF]/5 rounded-sm"
       )}
     >
       {/* Floating toolbar on select */}
