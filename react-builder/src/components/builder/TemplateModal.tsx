@@ -437,7 +437,7 @@ function buildDashboardTemplate(): BuildResult {
     tag: "h2", size: "lg", weight: "bold", color: "#111827", align: "left",
   })
   const subGreeting = mk("Text", {
-    content: "Thứ Năm, 19/06/2026 · Cửa hàng đang hoạt động tốt",
+    content: "Dashboard · Tổng quan hoạt động kinh doanh",
     tag: "p", size: "sm", weight: "normal", color: "#6B7280", align: "left",
   })
 
@@ -547,10 +547,10 @@ function buildBookingTemplate(): BuildResult {
   const serviceSection = mk("ZaloSection", { title: "Chọn dịch vụ", subtitle: "" })
   const serviceGrid = mk("Grid", { columns: "2", gap: "3", padding: "4" }, serviceSection.id)
   const services = [
-    { value: "Cắt tóc", label: "Cắt tóc", color: "#7C3AED" },
-    { value: "Nhuộm tóc", label: "Nhuộm tóc", color: "#7C3AED" },
-    { value: "Massage", label: "Massage", color: "#7C3AED" },
-    { value: "Làm nail", label: "Làm nail", color: "#7C3AED" },
+    { value: "80K", label: "✂️ Cắt tóc", color: "#7C3AED" },
+    { value: "250K", label: "🎨 Nhuộm tóc", color: "#7C3AED" },
+    { value: "150K", label: "💆 Massage", color: "#7C3AED" },
+    { value: "120K", label: "💅 Làm nail", color: "#7C3AED" },
   ].map((s) =>
     mk("StatCard", { value: s.value, label: s.label, icon: "star", color: s.color, trend: "" }, serviceGrid.id)
   )
