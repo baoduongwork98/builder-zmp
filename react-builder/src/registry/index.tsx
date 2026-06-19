@@ -309,13 +309,22 @@ const zaloHeaderDef: ComponentDefinition = {
   },
   renderer: (props) => (
     <div
-      className="flex items-center gap-3 px-4 h-12 shrink-0"
-      style={{ backgroundColor: props.bgColor as string }}
+      className="flex items-center gap-3 px-4 shrink-0"
+      style={{
+        background:
+          (props.bgColor as string) === "#0068FF"
+            ? tk.accentGrad
+            : (props.bgColor as string),
+        height: 44,
+      }}
     >
       {(props.showBack as boolean) && (
-        <button className="text-white text-xl leading-none">‹</button>
+        <RiArrowLeftSLine style={{ fontSize: 26, color: "white", flexShrink: 0 }} />
       )}
-      <span className="flex-1 text-white font-semibold text-base truncate">
+      <span
+        className="flex-1 text-white font-semibold truncate"
+        style={{ fontSize: 15, letterSpacing: "-0.2px" }}
+      >
         {props.title as string}
       </span>
     </div>
@@ -325,6 +334,16 @@ const zaloHeaderDef: ComponentDefinition = {
     const showBackProp = props.showBack === false ? ` showBackIcon={false}` : ""
     return `${ind(level)}<Header title="${props.title}"${showBackProp} backgroundColor="${props.bgColor}" />`
   },
+}
+
+const emojiIconMap: Record<string, React.ElementType> = {
+  "🏠": RiHomeLine,
+  "🔍": RiSearchLine,
+  "👤": RiUserLine,
+  "⭐": RiStarLine,
+  "🛒": RiShoppingCartLine,
+  "❤️": RiHeartLine,
+  "⚙️": RiSettings3Line,
 }
 
 const zaloBottomNavDef: ComponentDefinition = {
@@ -356,28 +375,51 @@ const zaloBottomNavDef: ComponentDefinition = {
   },
   renderer: (props) => {
     const tabs = [
-      { icon: props.tab1Icon as string, label: props.tab1Label as string, key: "1", route: props.tab1Route as string },
-      { icon: props.tab2Icon as string, label: props.tab2Label as string, key: "2", route: props.tab2Route as string },
-      { icon: props.tab3Icon as string, label: props.tab3Label as string, key: "3", route: props.tab3Route as string },
+      { icon: props.tab1Icon as string, label: props.tab1Label as string, key: "1" },
+      { icon: props.tab2Icon as string, label: props.tab2Label as string, key: "2" },
+      { icon: props.tab3Icon as string, label: props.tab3Label as string, key: "3" },
     ]
     return (
-      <div className="flex items-center justify-around bg-white border-t border-gray-200 h-14 px-2 shrink-0">
-        {tabs.map((tab) => (
-          <div key={tab.key} className="flex flex-col items-center gap-0.5 flex-1 relative">
-            <span className="text-xl leading-none">{tab.icon}</span>
-            <span
-              className={`text-[10px] font-medium ${props.activeTab === tab.key ? "text-[#0068FF]" : "text-gray-500"}`}
-            >
-              {tab.label}
-            </span>
-            {tab.route && (
-              <span className="text-[8px] text-gray-400 leading-none truncate max-w-full px-1">{tab.route}</span>
-            )}
-            {props.activeTab === tab.key && (
-              <div className="absolute bottom-0 w-8 h-0.5 bg-[#0068FF] rounded-full" />
-            )}
-          </div>
-        ))}
+      <div
+        className="flex items-center justify-around px-2 shrink-0"
+        style={{
+          height: 60,
+          background: "rgba(255,255,255,0.96)",
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          borderTop: tk.border,
+        }}
+      >
+        {tabs.map((tab) => {
+          const isActive = props.activeTab === tab.key
+          const IconComp = emojiIconMap[tab.icon]
+          return (
+            <div key={tab.key} className="flex flex-col items-center gap-0.5 flex-1 relative pt-1">
+              {isActive && (
+                <div
+                  className="absolute top-0 w-8 h-[3px] rounded-full"
+                  style={{ background: tk.accent }}
+                />
+              )}
+              {IconComp ? (
+                <IconComp
+                  style={{
+                    fontSize: 22,
+                    color: isActive ? tk.accent : tk.textTertiary,
+                  }}
+                />
+              ) : (
+                <span className="text-xl leading-none">{tab.icon}</span>
+              )}
+              <span
+                className="text-[10px] font-medium"
+                style={{ color: isActive ? tk.accent : tk.textTertiary }}
+              >
+                {tab.label}
+              </span>
+            </div>
+          )
+        })}
       </div>
     )
   },
@@ -696,7 +738,14 @@ const zaloPageDef: ComponentDefinition = {
         className={`flex flex-col min-h-full w-full ${paddingClass[props.padding as string] ?? "p-0"}`}
         style={{ backgroundColor: props.bgColor as string }}
       >
-        {children ?? <span className="text-gray-300 text-xs p-4">Thả component vào đây</span>}
+        {children ?? (
+          <div className="flex flex-col items-center justify-center gap-1 py-8"
+            style={{ border: "2px dashed rgba(0,104,255,0.15)", borderRadius: tk.radius.lg, margin: 16 }}>
+            <span className="text-xs font-medium" style={{ color: "rgba(0,104,255,0.4)" }}>
+              Thả component vào đây
+            </span>
+          </div>
+        )}
       </div>
     )
   },
