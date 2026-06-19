@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import {
   getUser,
   listRepos,
@@ -13,6 +13,31 @@ import {
 } from "@/lib/github"
 
 const STORAGE_KEY = "github_token"
+const LAST_SELECTION_KEY = "github_last_selection"
+
+interface LastSelection {
+  mode?: "new-repo" | "existing-repo"
+  repoId?: number
+  branch?: string
+  branchMode?: "existing" | "new"
+  newBranchName?: string
+}
+
+function loadLastSelection(): LastSelection | null {
+  if (typeof window === "undefined") return null
+  try {
+    return JSON.parse(localStorage.getItem(LAST_SELECTION_KEY) ?? "null") as LastSelection | null
+  } catch {
+    return null
+  }
+}
+
+function saveLastSelection(patch: Partial<LastSelection>) {
+  try {
+    const current = loadLastSelection() ?? {}
+    localStorage.setItem(LAST_SELECTION_KEY, JSON.stringify({ ...current, ...patch }))
+  } catch {}
+}
 
 function getAuthUrl(): string {
   const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID ?? ""
@@ -25,6 +50,10 @@ interface Props {
 }
 
 export function GitHubExportTab({ files }: Props) {
+  const storedRef = useRef<LastSelection | null>(
+    typeof window !== "undefined" ? loadLastSelection() : null
+  )
+
   // ── Auth state ───────────────────────────────────────────────────────────────
   const [authLoading, setAuthLoading] = useState<boolean>(
     () => typeof window !== "undefined" && !!localStorage.getItem(STORAGE_KEY)
@@ -34,7 +63,9 @@ export function GitHubExportTab({ files }: Props) {
   const [authError, setAuthError] = useState<string | null>(null)
 
   // ── Mode ─────────────────────────────────────────────────────────────────────
-  const [mode, setMode] = useState<"new-repo" | "existing-repo">("new-repo")
+  const [mode, setMode] = useState<"new-repo" | "existing-repo">(
+    () => storedRef.current?.mode ?? "new-repo"
+  )
 
   // ── New repo form ────────────────────────────────────────────────────────────
   const [repoName, setRepoName] = useState("")
@@ -51,9 +82,13 @@ export function GitHubExportTab({ files }: Props) {
   const branches = selectedRepo ? (branchCache[selectedRepo.id] ?? []) : []
   const branchesLoading = !!selectedRepo && !(selectedRepo.id in branchCache)
 
-  const [branchMode, setBranchMode] = useState<"existing" | "new">("existing")
+  const [branchMode, setBranchMode] = useState<"existing" | "new">(
+    () => storedRef.current?.branchMode ?? "existing"
+  )
   const [selectedBranch, setSelectedBranch] = useState("")
-  const [newBranchName, setNewBranchName] = useState("zmp-export")
+  const [newBranchName, setNewBranchName] = useState(
+    () => storedRef.current?.newBranchName ?? "zmp-export"
+  )
 
   // ── Push state ───────────────────────────────────────────────────────────────
   const [pushing, setPushing] = useState(false)
@@ -111,6 +146,14 @@ export function GitHubExportTab({ files }: Props) {
     return () => { cancelled = true }
   }, [mode, token, repos.length])
 
+  // ── Auto-select last used repo after repos load ───────────────────────────────
+
+  useEffect(() => {
+    if (repos.length === 0 || selectedRepo !== null || !storedRef.current?.repoId) return
+    const stored = repos.find((r) => r.id === storedRef.current!.repoId)
+    if (stored) setSelectedRepo(stored)
+  }, [repos, selectedRepo])
+
   // ── Load branches when a repo is selected ────────────────────────────────────
 
   useEffect(() => {
@@ -120,7 +163,12 @@ export function GitHubExportTab({ files }: Props) {
       .then((b) => {
         if (!cancelled) {
           setBranchCache((prev) => ({ ...prev, [selectedRepo.id]: b }))
-          setSelectedBranch(b[0]?.name ?? "")
+          const storedBranch = storedRef.current?.branch
+          const preferred =
+            storedBranch && b.some((br) => br.name === storedBranch)
+              ? storedBranch
+              : (b[0]?.name ?? "")
+          setSelectedBranch(preferred)
         }
       })
       .catch(() => {
@@ -130,6 +178,15 @@ export function GitHubExportTab({ files }: Props) {
       })
     return () => { cancelled = true }
   }, [selectedRepo, token, branchCache])
+
+  // ── Persist last selection to localStorage ───────────────────────────────────
+
+  useEffect(() => { saveLastSelection({ mode }) }, [mode])
+  useEffect(() => {
+    if (selectedRepo) saveLastSelection({ repoId: selectedRepo.id })
+  }, [selectedRepo])
+  useEffect(() => { saveLastSelection({ branch: selectedBranch }) }, [selectedBranch])
+  useEffect(() => { saveLastSelection({ branchMode, newBranchName }) }, [branchMode, newBranchName])
 
   const filteredRepos = repos.filter((r) =>
     r.full_name.toLowerCase().includes(repoSearch.toLowerCase())

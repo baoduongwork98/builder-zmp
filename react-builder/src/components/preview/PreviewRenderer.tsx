@@ -1,6 +1,7 @@
 "use client"
 
 import { createContext, useContext } from "react"
+import { toast } from "sonner"
 import { registry } from "@/registry/index"
 import { ComponentNode } from "@/types/builder"
 
@@ -32,7 +33,11 @@ function executeAction(
     case "openPhone":
       window.open(`tel:${action.phone as string}`)
       break
-    // showSnackbar, setState, callApi — out of scope for now
+    case "showSnackbar":
+      toast(action.message as string, {
+        description: action.description as string | undefined,
+      })
+      break
   }
 }
 

@@ -5,6 +5,7 @@ import { useDraggable } from "@dnd-kit/core"
 import { registry, categoryOrder } from "@/registry/index"
 import { ComponentDefinition } from "@/types/builder"
 import { cn } from "@/lib/utils"
+import { Input } from "@/components/ui/input"
 
 // ─── Tooltip ────────────────────────────────────────────────────────────────
 
@@ -18,6 +19,7 @@ const categoryLabels: Record<string, string> = {
   zalo: "Zalo UI",
   layout: "Layout",
   ui: "Content",
+  form: "Form",
 }
 
 function ComponentTooltip({ def, y }: { def: ComponentDefinition; y: number }) {
@@ -199,13 +201,13 @@ export function ComponentPanel() {
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <input
+            <Input
               ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm kiếm... (⌘K)"
-              className="w-full text-[11px] bg-[#1A1A1E] border border-[#2A2A32] rounded-lg pl-7 pr-7 py-1.5 outline-none focus:border-[#0068FF]/60 text-zinc-300 placeholder:text-zinc-700 transition-colors"
+              className="text-[11px] bg-[#1A1A1E] border-[#2A2A32] rounded-lg pl-7 pr-7 h-7 focus-visible:border-[#0068FF]/60 focus-visible:ring-[#0068FF]/20 text-zinc-300 placeholder:text-zinc-700"
             />
             {search && (
               <button

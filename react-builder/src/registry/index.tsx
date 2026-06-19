@@ -1,5 +1,16 @@
 import { JSX } from "react"
+import { Switch } from "@/components/ui/switch"
+import { Input } from "@/components/ui/input"
+import { Textarea as ShadcnTextarea } from "@/components/ui/textarea"
+import { Progress } from "@/components/ui/progress"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
 import {
+  RiLayoutColumnLine,
+  RiArrowDownSLine,
+  RiWindowLine,
   RiLayoutLine,
   RiMenuLine,
   RiApps2Line,
@@ -159,29 +170,35 @@ const stackDef: ComponentDefinition = {
     padding: { label: "Padding", type: "select", defaultValue: "0", options: ["0", "2", "4", "6", "8"] },
     background: { label: "Background", type: "color", defaultValue: "transparent" },
   },
-  renderer: (props, children) => (
-    <div
-      className="flex min-h-10"
-      style={{
-        flexDirection: props.direction === "horizontal" ? "row" : "column",
-        gap: stackGapMap[props.gap as string] ?? "16px",
-        alignItems: props.align as string,
-        padding: stackPadMap[props.padding as string] ?? "0",
-        background: props.background as string,
-      }}
-    >
-      {children ?? (
-        <div
-          className="flex flex-col items-center justify-center gap-1 py-4 rounded-lg w-full"
-          style={{ border: "2px dashed rgba(0,104,255,0.2)" }}
-        >
-          <span className="text-xs font-medium" style={{ color: "rgba(0,104,255,0.4)" }}>
-            Thả component vào đây
-          </span>
-        </div>
-      )}
-    </div>
-  ),
+  renderer: (props, children) => {
+    const isH = props.direction === "horizontal"
+    return (
+      <div
+        className={isH ? "flex" : "flex flex-col min-h-10"}
+        style={{
+          flexDirection: isH ? "row" : "column",
+          flexWrap: "nowrap",
+          gap: stackGapMap[props.gap as string] ?? "16px",
+          alignItems: props.align as string,
+          padding: stackPadMap[props.padding as string] ?? "0",
+          background: props.background as string,
+          overflowX: isH ? "auto" : undefined,
+          overflowY: isH ? "hidden" : undefined,
+        }}
+      >
+        {children ?? (
+          <div
+            className="flex flex-col items-center justify-center gap-1 py-4 rounded-lg w-full"
+            style={{ border: "2px dashed rgba(0,104,255,0.2)" }}
+          >
+            <span className="text-xs font-medium" style={{ color: "rgba(0,104,255,0.4)" }}>
+              Thả component vào đây
+            </span>
+          </div>
+        )}
+      </div>
+    )
+  },
   toJSX: (props, renderChildren, level) => {
     const direction = props.direction === "horizontal" ? "flex-row" : "flex-col"
     const className = `flex ${direction} gap-${props.gap} items-${props.align} p-${props.padding}`
@@ -211,14 +228,9 @@ const dividerDef: ComponentDefinition = {
   renderer: (props) => {
     const marginClass: Record<string, string> = { none: "my-0", sm: "my-2", md: "my-4", lg: "my-8" }
     return (
-      <div
-        className={`w-full ${marginClass[props.margin as string] ?? "my-4"}`}
-        style={{
-          height: props.thickness as string,
-          background: props.color as string,
-          opacity: 0.5,
-          borderRadius: 9999,
-        }}
+      <Separator
+        className={marginClass[props.margin as string] ?? "my-4"}
+        style={{ backgroundColor: props.color as string, height: props.thickness as string }}
       />
     )
   },
@@ -309,18 +321,11 @@ const zaloInputDef: ComponentDefinition = {
         {props.label as string}
         {(props.required as boolean) && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <div
-        className="flex items-center gap-2 bg-white"
-        style={{ border: tk.border, borderRadius: tk.radius.md, padding: "10px 14px" }}
-      >
-        <RiUserLine style={{ fontSize: 16, color: tk.textTertiary, flexShrink: 0 }} />
-        <input
-          type={props.type as string}
-          placeholder={props.placeholder as string}
-          className="flex-1 bg-transparent outline-none"
-          style={{ fontSize: 14, color: tk.textPrimary }}
-        />
-      </div>
+      <Input
+        type={props.type as string}
+        placeholder={props.placeholder as string}
+        className="h-10 text-sm"
+      />
     </div>
   ),
   toJSX: (props, _renderChildren, level) => {
@@ -666,12 +671,8 @@ const zaloAvatarDef: ComponentDefinition = {
     showName: { label: "Hiện tên", type: "boolean", defaultValue: true },
   },
   renderer: (props) => {
-    const sizeClass: Record<string, string> = {
-      sm: "w-8 h-8 text-xs",
-      md: "w-12 h-12 text-sm",
-      lg: "w-16 h-16 text-base",
-      xl: "w-20 h-20 text-lg",
-    }
+    const sizeMap: Record<string, "sm" | "default" | "lg"> = { sm: "sm", md: "default", lg: "lg", xl: "lg" }
+    const sizeClass: Record<string, string> = { sm: "size-8", md: "size-12", lg: "size-16", xl: "size-20" }
     const initials = (props.name as string)
       .split(" ")
       .map((n: string) => n[0])
@@ -680,25 +681,15 @@ const zaloAvatarDef: ComponentDefinition = {
       .toUpperCase()
     return (
       <div className="flex flex-col items-center gap-2">
-        {(props.src as string) ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={props.src as string}
-            alt={props.name as string}
-            className={`${sizeClass[props.size as string]} rounded-full object-cover`}
-            style={{ boxShadow: "0 0 0 2px white, 0 0 0 4px rgba(0,104,255,0.2)" }}
-          />
-        ) : (
-          <div
-            className={`${sizeClass[props.size as string]} rounded-full flex items-center justify-center text-white font-bold`}
-            style={{
-              background: "linear-gradient(135deg, #0068FF 0%, #7C3AED 100%)",
-              boxShadow: "0 0 0 2px white, 0 0 0 4px rgba(0,104,255,0.2)",
-            }}
-          >
+        <Avatar
+          size={sizeMap[props.size as string] ?? "default"}
+          className={`${sizeClass[props.size as string]} ring-2 ring-white ring-offset-1 ring-offset-primary/20`}
+        >
+          <AvatarImage src={props.src as string} alt={props.name as string} />
+          <AvatarFallback className="bg-gradient-to-br from-primary to-purple-600 text-white font-bold text-sm">
             {initials}
-          </div>
-        )}
+          </AvatarFallback>
+        </Avatar>
         {(props.showName as boolean) && (
           <span className="text-[13px] font-semibold" style={{ color: tk.textPrimary }}>
             {props.name as string}
@@ -784,20 +775,15 @@ const zaloSearchBarDef: ComponentDefinition = {
     placeholder: { label: "Placeholder", type: "string", defaultValue: "Tìm kiếm..." },
   },
   renderer: (props) => (
-    <div
-      className="flex items-center gap-2 mx-4"
-      style={{
-        background: "rgba(0,0,0,0.05)",
-        borderRadius: tk.radius.md,
-        padding: "10px 12px",
-      }}
-    >
-      <RiSearchLine style={{ fontSize: 15, color: tk.textTertiary, flexShrink: 0 }} />
-      <input
+    <div className="relative mx-4">
+      <RiSearchLine
+        className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+        style={{ fontSize: 15, color: tk.textTertiary }}
+      />
+      <Input
         type="text"
         placeholder={props.placeholder as string}
-        className="flex-1 bg-transparent outline-none"
-        style={{ fontSize: 14, color: tk.textSecondary }}
+        className="h-10 pl-9 bg-black/5 border-transparent text-sm focus-visible:bg-white"
       />
     </div>
   ),
@@ -920,8 +906,12 @@ const gridDef: ComponentDefinition = {
   },
   renderer: (props, children) => (
     <div
-      className={`grid gap-${props.gap as string} p-${props.padding as string} min-h-[60px]`}
-      style={{ gridTemplateColumns: `repeat(${props.columns as string}, minmax(0, 1fr))` }}
+      className="grid min-h-[60px]"
+      style={{
+        gridTemplateColumns: `repeat(${props.columns as string}, minmax(0, 1fr))`,
+        gap: ({ "2": "8px", "3": "12px", "4": "16px", "6": "24px" } as Record<string, string>)[props.gap as string] ?? "16px",
+        padding: ({ "0": "0", "2": "8px", "3": "12px", "4": "16px", "6": "24px" } as Record<string, string>)[props.padding as string] ?? "0",
+      }}
     >
       {children ?? (
         <div
@@ -1056,34 +1046,16 @@ const progressBarDef: ComponentDefinition = {
     return (
       <div className="flex flex-col gap-2 w-full">
         {(props.showLabel as boolean) && (
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <span className="text-[13px] font-medium" style={{ color: tk.textSecondary }}>
               {props.label as string}
             </span>
-            <span
-              className="font-mono text-[11px] font-semibold rounded-md px-1.5 py-0.5"
-              style={{ background: "rgba(0,0,0,0.06)", color: tk.textSecondary }}
-            >
+            <span className="text-[11px] tabular-nums" style={{ color: tk.textSecondary }}>
               {pct}%
             </span>
           </div>
         )}
-        <div
-          className="w-full overflow-hidden"
-          style={{ height: 6, borderRadius: 9999, backgroundColor: props.bgColor as string }}
-        >
-          <div
-            className="h-full"
-            style={{
-              width: `${pct}%`,
-              borderRadius: 9999,
-              background:
-                (props.color as string) === "#0068FF"
-                  ? "linear-gradient(90deg, #0068FF 0%, #60A5FA 100%)"
-                  : (props.color as string),
-            }}
-          />
-        </div>
+        <Progress value={pct} className="w-full" />
       </div>
     )
   },
@@ -1123,31 +1095,10 @@ const switchDef: ComponentDefinition = {
           </span>
         )}
       </div>
-      <div
-        className="relative shrink-0"
-        style={{
-          width: 44,
-          height: 24,
-          borderRadius: 9999,
-          backgroundColor: (props.checked as boolean) ? tk.accent : "#D1D5DB",
-          boxShadow: (props.checked as boolean) ? "0 0 0 3px rgba(0,104,255,0.12)" : "none",
-          transition: "background-color 200ms",
-        }}
-      >
-        <div
-          style={{
-            position: "absolute",
-            top: 2,
-            left: (props.checked as boolean) ? 20 : 2,
-            width: 20,
-            height: 20,
-            borderRadius: 9999,
-            background: "white",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.12)",
-            transition: "left 200ms",
-          }}
-        />
-      </div>
+      <Switch
+        defaultChecked={props.checked as boolean}
+        className="data-[size=default]:h-6 data-[size=default]:w-11"
+      />
     </div>
   ),
   toJSX: (props, _renderChildren, level) => {
@@ -1252,26 +1203,11 @@ const textareaDef: ComponentDefinition = {
         {props.label as string}
         {(props.required as boolean) && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <div className="relative">
-        <textarea
-          rows={props.rows as number}
-          placeholder={props.placeholder as string}
-          className="w-full bg-white outline-none resize-none"
-          style={{
-            border: tk.border,
-            borderRadius: tk.radius.md,
-            padding: "11px 14px",
-            fontSize: 14,
-            color: tk.textPrimary,
-          }}
-        />
-        <span
-          className="absolute bottom-2 right-3 text-[11px]"
-          style={{ color: tk.textTertiary }}
-        >
-          0/∞
-        </span>
-      </div>
+      <ShadcnTextarea
+        rows={props.rows as number}
+        placeholder={props.placeholder as string}
+        className="text-sm"
+      />
     </div>
   ),
   toJSX: (props, _renderChildren, level) => {
@@ -1296,11 +1232,13 @@ const chipDef: ComponentDefinition = {
   },
   renderer: (props) => (
     <button
-      className="inline-flex items-center font-medium transition-all"
+      className="inline-flex items-center font-medium transition-all shrink-0"
       style={{
         borderRadius: 9999,
-        padding: "6px 16px",
+        padding: "5px 14px",
         fontSize: 13,
+        whiteSpace: "nowrap",
+        lineHeight: 1.25,
         ...(props.active as boolean)
           ? {
               background: tk.accentGrad,
@@ -1308,7 +1246,7 @@ const chipDef: ComponentDefinition = {
               boxShadow: tk.accentShadow,
             }
           : {
-              background: "rgba(0,0,0,0.05)",
+              background: "rgba(0,0,0,0.06)",
               color: tk.textSecondary,
             }
       }}
@@ -1368,16 +1306,16 @@ const productCardDef: ComponentDefinition = {
           </span>
         )}
       </div>
-      <div className="p-3">
-        <p className="text-[13px] font-semibold truncate mb-1.5" style={{ color: tk.textPrimary }}>
+      <div className="p-2.5">
+        <p className="text-[12px] font-semibold truncate mb-1" style={{ color: tk.textPrimary }}>
           {props.name as string}
         </p>
-        <div className="flex items-center gap-0.5 mb-2">
+        <div className="flex items-center gap-px mb-1.5">
           {Array.from({ length: 5 }).map((_, i) => (
             <svg
               key={i}
               viewBox="0 0 24 24"
-              className="w-3 h-3"
+              className="w-2.5 h-2.5 shrink-0"
               fill={i < (props.rating as number) ? "#F59E0B" : "none"}
               stroke={i < (props.rating as number) ? "#F59E0B" : "#D1D5DB"}
               strokeWidth={1.5}
@@ -1386,22 +1324,22 @@ const productCardDef: ComponentDefinition = {
             </svg>
           ))}
         </div>
-        <div className="flex items-end justify-between">
-          <div>
-            <span className="text-[15px] font-bold" style={{ color: tk.accent }}>
+        <div className="flex items-center justify-between gap-1 min-w-0">
+          <div className="min-w-0 flex-1">
+            <span className="text-[13px] font-bold block truncate" style={{ color: tk.accent }}>
               {props.price as string}
             </span>
             {(props.originalPrice as string) && (
-              <span className="text-[11px] line-through ml-1.5" style={{ color: tk.textTertiary }}>
+              <span className="text-[10px] line-through" style={{ color: tk.textTertiary }}>
                 {props.originalPrice as string}
               </span>
             )}
           </div>
           <button
-            className="text-white text-[12px] font-semibold px-3 py-1.5 rounded-lg"
+            className="text-white text-[14px] font-bold w-7 h-7 rounded-lg shrink-0 flex items-center justify-center leading-none"
             style={{ background: tk.accentGrad }}
           >
-            Thêm
+            +
           </button>
         </div>
       </div>
@@ -1823,6 +1761,262 @@ const notificationItemDef: ComponentDefinition = {
   },
 }
 
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+const tabsDef: ComponentDefinition = {
+  type: "Tabs",
+  label: "Tabs",
+  icon: RiLayoutColumnLine,
+  description: "Tab navigation với nhiều nội dung — kéo component vào tab",
+  category: "layout",
+  acceptsChildren: true,
+  zmpImports: [],
+  defaultProps: { tab1Label: "Tab 1", tab2Label: "Tab 2", tab3Label: "", activeTab: "1" },
+  propSchema: {
+    tab1Label: { label: "Tab 1", type: "string", defaultValue: "Tab 1" },
+    tab2Label: { label: "Tab 2", type: "string", defaultValue: "Tab 2" },
+    tab3Label: { label: "Tab 3 (tùy chọn)", type: "string", defaultValue: "" },
+    activeTab: { label: "Tab mặc định", type: "select", defaultValue: "1", options: ["1", "2", "3"] },
+  },
+  renderer: (props, children) => {
+    const active = (props.activeTab as string) ?? "1"
+    const hasTab3 = Boolean(props.tab3Label as string)
+    return (
+      <Tabs defaultValue={active} className="w-full">
+        <TabsList className="w-full">
+          <TabsTrigger value="1" className="flex-1">{props.tab1Label as string}</TabsTrigger>
+          <TabsTrigger value="2" className="flex-1">{props.tab2Label as string}</TabsTrigger>
+          {hasTab3 && (
+            <TabsTrigger value="3" className="flex-1">{props.tab3Label as string}</TabsTrigger>
+          )}
+        </TabsList>
+        <TabsContent value={active} className="min-h-12">
+          {children ?? (
+            <div
+              className="flex items-center justify-center py-6 text-xs rounded-lg"
+              style={{ border: "2px dashed rgba(0,104,255,0.2)", color: "rgba(0,104,255,0.4)" }}
+            >
+              Thả component vào đây
+            </div>
+          )}
+        </TabsContent>
+        {active !== "2" && <TabsContent value="2" />}
+        {hasTab3 && active !== "3" && <TabsContent value="3" />}
+      </Tabs>
+    )
+  },
+  toJSX: (props, renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+    const hasTab3 = Boolean(props.tab3Label as string)
+    const children = renderChildren(level + 2)
+    const tab3Trigger = hasTab3 ? `\n${i2}<TabsTrigger value="3">${props.tab3Label}</TabsTrigger>` : ""
+    const tab3Content = hasTab3 ? `\n${i1}<TabsContent value="3" />` : ""
+    return [
+      `${i0}<Tabs defaultValue="${props.activeTab}">`,
+      `${i1}<TabsList>`,
+      `${i2}<TabsTrigger value="1">${props.tab1Label}</TabsTrigger>`,
+      `${i2}<TabsTrigger value="2">${props.tab2Label}</TabsTrigger>${tab3Trigger}`,
+      `${i1}</TabsList>`,
+      `${i1}<TabsContent value="${props.activeTab}">`,
+      children ?? `${i2}{/* content */}`,
+      `${i1}</TabsContent>${tab3Content}`,
+      `${i0}</Tabs>`,
+    ].join("\n")
+  },
+}
+
+// ─── SelectField ──────────────────────────────────────────────────────────────
+
+const selectFieldDef: ComponentDefinition = {
+  type: "SelectField",
+  label: "Select",
+  icon: RiArrowDownSLine,
+  description: "Dropdown chọn giá trị từ danh sách tùy chỉnh",
+  category: "form",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: { label: "Danh mục", placeholder: "Chọn...", options: "Tùy chọn 1, Tùy chọn 2, Tùy chọn 3", required: false },
+  propSchema: {
+    label: { label: "Label", type: "string", defaultValue: "Danh mục" },
+    placeholder: { label: "Placeholder", type: "string", defaultValue: "Chọn..." },
+    options: { label: "Danh sách (phân cách bằng dấu phẩy)", type: "textarea", defaultValue: "Tùy chọn 1, Tùy chọn 2, Tùy chọn 3" },
+    required: { label: "Bắt buộc", type: "boolean", defaultValue: false },
+  },
+  renderer: (props) => {
+    const options = (props.options as string).split(",").map((o) => o.trim()).filter(Boolean)
+    return (
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[13px] font-medium" style={{ color: tk.textSecondary }}>
+          {props.label as string}
+          {(props.required as boolean) && <span className="text-red-500 ml-0.5">*</span>}
+        </label>
+        <Select>
+          <SelectTrigger className="w-full h-10 text-sm">
+            <SelectValue placeholder={props.placeholder as string} />
+          </SelectTrigger>
+          <SelectContent>
+            {options.map((opt) => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )
+  },
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+    const options = (props.options as string).split(",").map((o) => o.trim()).filter(Boolean)
+    const optItems = options.map((o) => `${i2}<SelectItem value="${o}">${o}</SelectItem>`).join("\n")
+    const req = props.required ? " required" : ""
+    return [
+      `${i0}<div className="flex flex-col gap-1.5"${req}>`,
+      `${i1}<label className="text-sm font-medium text-gray-600">${props.label}</label>`,
+      `${i1}<Select>`,
+      `${i2}<SelectTrigger><SelectValue placeholder="${props.placeholder}" /></SelectTrigger>`,
+      `${i2}<SelectContent>`,
+      optItems,
+      `${i2}</SelectContent>`,
+      `${i1}</Select>`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
+}
+
+// ─── BottomSheet ──────────────────────────────────────────────────────────────
+
+const bottomSheetDef: ComponentDefinition = {
+  type: "BottomSheet",
+  label: "Bottom Sheet",
+  icon: RiLayoutBottomLine,
+  description: "Panel trượt từ dưới lên — thiết kế nội dung sheet",
+  category: "layout",
+  acceptsChildren: true,
+  zmpImports: [],
+  defaultProps: { title: "Tiêu đề Sheet", description: "", showHandle: true },
+  propSchema: {
+    title: { label: "Tiêu đề", type: "string", defaultValue: "Tiêu đề Sheet" },
+    description: { label: "Mô tả", type: "string", defaultValue: "" },
+    showHandle: { label: "Hiện drag handle", type: "boolean", defaultValue: true },
+  },
+  renderer: (props, children) => (
+    <div
+      className="flex flex-col w-full bg-white pt-2 pb-4 px-4"
+      style={{ borderRadius: "16px 16px 0 0", boxShadow: "0 -4px 24px rgba(0,0,0,0.10)", border: tk.border }}
+    >
+      {(props.showHandle as boolean) && (
+        <div className="w-9 h-1 rounded-full bg-zinc-200 mx-auto mb-3 shrink-0" />
+      )}
+      {(props.title as string) && (
+        <h3 className="text-[15px] font-bold mb-1" style={{ color: tk.textPrimary }}>
+          {props.title as string}
+        </h3>
+      )}
+      {(props.description as string) && (
+        <p className="text-[13px] mb-3" style={{ color: tk.textSecondary }}>
+          {props.description as string}
+        </p>
+      )}
+      {children ?? (
+        <div
+          className="flex items-center justify-center py-6 text-xs rounded-lg"
+          style={{ border: "2px dashed rgba(0,104,255,0.2)", color: "rgba(0,104,255,0.4)" }}
+        >
+          Thả component vào đây
+        </div>
+      )}
+    </div>
+  ),
+  toJSX: (props, renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1)
+    const handle = props.showHandle
+      ? `\n${i1}<div className="w-9 h-1 rounded-full bg-zinc-200 mx-auto mb-3" />`
+      : ""
+    const title = props.title ? `\n${i1}<h3 className="text-base font-bold mb-1">${props.title}</h3>` : ""
+    const desc = props.description ? `\n${i1}<p className="text-sm text-gray-500 mb-3">${props.description}</p>` : ""
+    const children = renderChildren(level + 1)
+    return [
+      `${i0}<Sheet>`,
+      `${i1}<SheetContent side="bottom">`,
+      `${i1}<SheetHeader>${handle}${title}${desc}`,
+      `${i1}</SheetHeader>`,
+      children ?? "",
+      `${i1}</SheetContent>`,
+      `${i0}</Sheet>`,
+    ].join("\n")
+  },
+}
+
+// ─── ModalCard ────────────────────────────────────────────────────────────────
+
+const modalCardDef: ComponentDefinition = {
+  type: "ModalCard",
+  label: "Modal",
+  icon: RiWindowLine,
+  description: "Hộp thoại modal — thiết kế nội dung dialog",
+  category: "layout",
+  acceptsChildren: true,
+  zmpImports: [],
+  defaultProps: { title: "Tiêu đề Modal", description: "", showClose: true },
+  propSchema: {
+    title: { label: "Tiêu đề", type: "string", defaultValue: "Tiêu đề Modal" },
+    description: { label: "Mô tả", type: "string", defaultValue: "" },
+    showClose: { label: "Hiện nút đóng", type: "boolean", defaultValue: true },
+  },
+  renderer: (props, children) => (
+    <div
+      className="flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.35)", borderRadius: tk.radius.xl }}
+    >
+      <div
+        className="bg-white w-full flex flex-col gap-2"
+        style={{ borderRadius: tk.radius.xl, padding: 20, boxShadow: tk.shadow.lg }}
+      >
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-[15px] font-bold" style={{ color: tk.textPrimary }}>
+              {props.title as string}
+            </h3>
+            {(props.description as string) && (
+              <p className="text-[13px] mt-0.5" style={{ color: tk.textSecondary }}>
+                {props.description as string}
+              </p>
+            )}
+          </div>
+          {(props.showClose as boolean) && (
+            <RiCloseCircleLine style={{ fontSize: 20, color: tk.textTertiary, flexShrink: 0, marginLeft: 8 }} />
+          )}
+        </div>
+        {children ?? (
+          <div
+            className="flex items-center justify-center py-4 text-xs rounded-lg"
+            style={{ border: "2px dashed rgba(0,104,255,0.2)", color: "rgba(0,104,255,0.4)" }}
+          >
+            Thả component vào đây
+          </div>
+        )}
+      </div>
+    </div>
+  ),
+  toJSX: (props, renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+    const closeBtn = props.showClose
+      ? `\n${i2}<DialogClose asChild><Button variant="ghost" size="icon"><XIcon /></Button></DialogClose>`
+      : ""
+    const desc = props.description ? `\n${i2}<DialogDescription>${props.description}</DialogDescription>` : ""
+    const children = renderChildren(level + 2)
+    return [
+      `${i0}<Dialog>`,
+      `${i1}<DialogContent>`,
+      `${i2}<DialogHeader>`,
+      `${i2}<DialogTitle>${props.title}</DialogTitle>${desc}`,
+      `${i2}</DialogHeader>${closeBtn}`,
+      children ?? "",
+      `${i1}</DialogContent>`,
+      `${i0}</Dialog>`,
+    ].join("\n")
+  },
+}
+
 // ─── Registry exports ─────────────────────────────────────────────────────────
 
 export const registry: Record<string, ComponentDefinition> = {
@@ -1858,7 +2052,11 @@ export const registry: Record<string, ComponentDefinition> = {
   Textarea: textareaDef,
   Chip: chipDef,
   HeroSection: heroSectionDef,
+  Tabs: tabsDef,
+  SelectField: selectFieldDef,
+  BottomSheet: bottomSheetDef,
+  ModalCard: modalCardDef,
 }
 
-export const categoryOrder = ["zalo", "layout", "ui"] as const
+export const categoryOrder = ["zalo", "layout", "ui", "form"] as const
 export type CategoryKey = (typeof categoryOrder)[number]

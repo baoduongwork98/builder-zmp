@@ -4,6 +4,7 @@ import React from "react"
 import { nanoid } from "nanoid"
 import { ComponentNode } from "@/types/builder"
 import { useBuilderStore } from "@/store/builderStore"
+import { Input } from "@/components/ui/input"
 
 // ─── Node builder helpers ─────────────────────────────────────────────────────
 
@@ -728,159 +729,265 @@ const CATEGORY_COLORS: Record<string, string> = {
   services:  "text-teal-600 bg-teal-50 border-teal-100",
 }
 
-// ─── CSS Wireframe components ─────────────────────────────────────────────────
-
-function WfHeader({ color = "#3B82F6" }: { color?: string }) {
-  return <div style={{ height: 28, background: color, borderRadius: "4px 4px 0 0", marginBottom: 4, flexShrink: 0 }} />
+const CATEGORY_DOT: Record<string, string> = {
+  ecommerce: "#0068FF",
+  auth:      "#7C3AED",
+  analytics: "#059669",
+  social:    "#F59E0B",
+  services:  "#0D9488",
 }
 
-function WfHero() {
-  return <div style={{ height: 56, background: "#D1D5DB", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
+// ─── Wireframe design system ──────────────────────────────────────────────────
+
+const S = {
+  col: { display: "flex", flexDirection: "column" as const },
+  row: { display: "flex", flexDirection: "row" as const },
+  flex1: { flex: 1 },
+  shrink0: { flexShrink: 0 },
 }
 
-function WfSearchBar() {
+function WfStatusBar({ light = false }: { light?: boolean }) {
+  const fg = light ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.22)"
   return (
-    <div style={{ height: 18, background: "#E5E7EB", borderRadius: 9, marginBottom: 4, marginLeft: 4, marginRight: 4, flexShrink: 0 }} />
-  )
-}
-
-function WfChipRow({ count = 4 }: { count?: number }) {
-  const widths = [38, 32, 28, 34].slice(0, count)
-  return (
-    <div style={{ display: "flex", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
-      {widths.map((w, i) => (
-        <div key={i} style={{ height: 14, width: w, background: i === 0 ? "#93C5FD" : "#E5E7EB", borderRadius: 7, flexShrink: 0 }} />
-      ))}
+    <div style={{ ...S.row, alignItems: "center", justifyContent: "space-between", padding: "5px 8px 3px", flexShrink: 0, position: "relative" }}>
+      <div style={{ width: 18, height: 4, background: fg, borderRadius: 2 }} />
+      {/* Dynamic Island pill — always black, represents camera cutout */}
+      <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: 46, height: 13, background: "#0D0D0D", borderRadius: 8, zIndex: 1 }} />
+      <div style={{ ...S.row, gap: 3, alignItems: "center" }}>
+        <div style={{ width: 8, height: 4, background: fg, borderRadius: 1 }} />
+        <div style={{ width: 5, height: 4, background: fg, borderRadius: 1 }} />
+        <div style={{ width: 10, height: 4, background: fg, borderRadius: 1 }} />
+      </div>
     </div>
   )
 }
 
-function WfGrid2({ rows = 2 }: { rows?: number }) {
+function WfTopBar({ color, title, hasBack = false }: { color: string; title: string; hasBack?: boolean }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "0 4px", marginBottom: 4 }}>
-      {Array(rows * 2).fill(0).map((_, i) => (
-        <div key={i} style={{ background: "#F3F4F6", borderRadius: 4, padding: 4 }}>
-          <div style={{ height: 28, background: "#D1D5DB", borderRadius: 3, marginBottom: 3 }} />
-          <div style={{ height: 7, background: "#E5E7EB", borderRadius: 3, marginBottom: 2 }} />
-          <div style={{ height: 7, background: "#E5E7EB", borderRadius: 3, width: "55%" }} />
+    <div style={{ background: color, flexShrink: 0 }}>
+      <WfStatusBar light />
+      <div style={{ ...S.row, alignItems: "center", gap: 5, padding: "4px 8px 7px" }}>
+        {hasBack && (
+          <div style={{ width: 6, height: 10, borderLeft: "2px solid rgba(255,255,255,0.8)", borderBottom: "2px solid rgba(255,255,255,0.8)", transform: "rotate(45deg)", flexShrink: 0 }} />
+        )}
+        <div style={{ height: 7, background: "rgba(255,255,255,0.9)", borderRadius: 3, width: hasBack ? 44 : 36, flexShrink: 0 }} />
+        <div style={{ flex: 1 }} />
+        <div style={{ width: 14, height: 14, background: "rgba(255,255,255,0.25)", borderRadius: "50%", flexShrink: 0 }} />
+      </div>
+    </div>
+  )
+}
+
+function WfBottomNav({ active = 0, color = "#0068FF", labels = ["🏠", "🔍", "👤"] }: { active?: number; color?: string; labels?: string[] }) {
+  return (
+    <div style={{
+      ...S.row, justifyContent: "space-around", alignItems: "flex-start",
+      padding: "7px 6px 4px",
+      background: "#fff", borderTop: "1px solid #F1F1F1",
+      flexShrink: 0, marginTop: "auto",
+    }}>
+      {labels.map((em, i) => (
+        <div key={i} style={{ ...S.col, alignItems: "center", gap: 3, minWidth: 28 }}>
+          <div style={{
+            width: 20, height: 20, background: i === active ? `${color}18` : "#F5F5F7",
+            borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 10,
+          }}>{em}</div>
+          {i === active && <div style={{ width: 14, height: 3, background: color, borderRadius: 2 }} />}
         </div>
       ))}
     </div>
   )
 }
 
-function WfBottomNav() {
+function WfSearchBar({ placeholder = "" }: { placeholder?: string }) {
   return (
-    <div style={{ height: 28, background: "#F9FAFB", borderTop: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-around", flexShrink: 0, marginTop: "auto" }}>
-      {[1, 2, 3].map((i) => (
-        <div key={i} style={{ width: 14, height: 14, background: "#D1D5DB", borderRadius: "50%" }} />
+    <div style={{ margin: "5px 7px 0", background: "#F2F2F7", borderRadius: 8, padding: "5px 8px", ...S.row, alignItems: "center", gap: 4, flexShrink: 0 }}>
+      <div style={{ width: 8, height: 8, border: "1.5px solid #BBBBC0", borderRadius: "50%", flexShrink: 0 }} />
+      <div style={{ height: 5, background: "#C7C7CC", borderRadius: 3, width: placeholder ? 52 : 40 }} />
+    </div>
+  )
+}
+
+function WfChips({ items, activeIdx = 0, color = "#0068FF" }: { items: string[]; activeIdx?: number; color?: string }) {
+  return (
+    <div style={{ ...S.row, gap: 4, padding: "6px 7px", flexShrink: 0, overflowX: "hidden" }}>
+      {items.map((label, i) => (
+        <div key={i} style={{
+          height: 16, padding: "0 7px", display: "flex", alignItems: "center", justifyContent: "center",
+          background: i === activeIdx ? color : "#F2F2F7",
+          borderRadius: 8, flexShrink: 0,
+        }}>
+          <div style={{ height: 5, width: label.length * 3.5, background: i === activeIdx ? "rgba(255,255,255,0.9)" : "#C7C7CC", borderRadius: 3, maxWidth: 40 }} />
+        </div>
       ))}
     </div>
   )
 }
 
-function WfTextLine({ width = "100%", bold = false }: { width?: string; bold?: boolean }) {
-  return <div style={{ height: bold ? 9 : 6, background: bold ? "#9CA3AF" : "#E5E7EB", borderRadius: 3, width, marginBottom: 3, flexShrink: 0 }} />
-}
-
-function WfButton({ color = "#93C5FD" }: { color?: string }) {
-  return <div style={{ height: 22, background: color, borderRadius: 6, marginBottom: 4, flexShrink: 0 }} />
-}
-
-function WfListItem() {
+function WfProductCard({ seed, badge, color = "#0068FF" }: { seed: string; badge?: string; color?: string }) {
+  const palettes = ["#FFD6CC", "#C8E6FF", "#D5F5E3", "#E8D5FF", "#FFF3CC", "#FFE4F0"]
+  const bg = palettes[seed.charCodeAt(0) % palettes.length]
   return (
-    <div style={{ display: "flex", gap: 6, padding: "5px 4px", borderBottom: "1px solid #F3F4F6", alignItems: "center", flexShrink: 0 }}>
-      <div style={{ width: 24, height: 24, background: "#E5E7EB", borderRadius: "50%", flexShrink: 0 }} />
+    <div style={{ background: "#fff", borderRadius: 8, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
+      <div style={{ height: 36, background: bg, position: "relative" }}>
+        {badge && (
+          <div style={{
+            position: "absolute", top: 3, left: 3, background: color, borderRadius: 3,
+            padding: "1px 4px", display: "flex", alignItems: "center",
+          }}>
+            <div style={{ height: 4, width: 12, background: "rgba(255,255,255,0.9)", borderRadius: 2 }} />
+          </div>
+        )}
+      </div>
+      <div style={{ padding: "4px 5px" }}>
+        <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: "85%", marginBottom: 3 }} />
+        <div style={{ ...S.row, alignItems: "center", gap: 3 }}>
+          <div style={{ height: 6, background: color, borderRadius: 3, width: 30 }} />
+          <div style={{ height: 5, background: "#F3F4F6", borderRadius: 3, width: 20 }} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WfProductGrid({ seeds, color = "#0068FF" }: { seeds: string[]; color?: string }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, padding: "5px 7px", flex: 1, overflow: "hidden", alignContent: "start" }}>
+      {seeds.map((s, i) => <WfProductCard key={i} seed={s} badge={i % 3 === 0 ? "Sale" : undefined} color={color} />)}
+    </div>
+  )
+}
+
+function WfHeroBanner({ color = "#0068FF" }: { color?: string }) {
+  return (
+    <div style={{
+      margin: "6px 7px 0", borderRadius: 10, overflow: "hidden", flexShrink: 0,
+      background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)`,
+      height: 62, position: "relative", display: "flex", alignItems: "flex-end", padding: 8,
+    }}>
+      <div style={{ position: "absolute", right: 8, top: 6, width: 40, height: 46, background: "rgba(255,255,255,0.15)", borderRadius: 6 }} />
+      <div>
+        <div style={{ height: 6, background: "rgba(255,255,255,0.9)", borderRadius: 3, width: 60, marginBottom: 4 }} />
+        <div style={{ height: 4, background: "rgba(255,255,255,0.55)", borderRadius: 3, width: 80 }} />
+      </div>
+    </div>
+  )
+}
+
+function WfNotifItem({ color = "#0068FF", unread = false }: { color?: string; unread?: boolean }) {
+  return (
+    <div style={{ ...S.row, gap: 6, padding: "6px 8px", borderBottom: "1px solid #F5F5F5", alignItems: "flex-start", flexShrink: 0 }}>
+      <div style={{ width: 22, height: 22, borderRadius: "50%", background: `${color}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <div style={{ width: 8, height: 8, background: color, borderRadius: "50%" }} />
+      </div>
       <div style={{ flex: 1 }}>
-        <div style={{ height: 6, background: "#D1D5DB", borderRadius: 3, marginBottom: 3, width: "65%" }} />
-        <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: "45%" }} />
+        <div style={{ ...S.row, justifyContent: "space-between", marginBottom: 3 }}>
+          <div style={{ height: 6, background: unread ? "#1F2937" : "#D1D5DB", borderRadius: 3, width: "60%", fontWeight: unread ? 700 : 400 }} />
+          <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: 20 }} />
+        </div>
+        <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: "85%" }} />
+      </div>
+      {unread && <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#0068FF", flexShrink: 0, marginTop: 3 }} />}
+    </div>
+  )
+}
+
+function WfCartItem({ color = "#0068FF" }: { color?: string }) {
+  const bg = ["#FFD6CC", "#C8E6FF", "#D5F5E3"][Math.floor(Math.random() * 3)]
+  return (
+    <div style={{ ...S.row, gap: 7, padding: "7px 8px", borderBottom: "1px solid #F5F5F5", alignItems: "center", flexShrink: 0 }}>
+      <div style={{ width: 30, height: 30, borderRadius: 6, background: bg, flexShrink: 0 }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ height: 6, background: "#D1D5DB", borderRadius: 3, width: "70%", marginBottom: 4 }} />
+        <div style={{ ...S.row, gap: 6, alignItems: "center" }}>
+          <div style={{ height: 6, background: color, borderRadius: 3, width: 32 }} />
+          <div style={{ ...S.row, gap: 2, alignItems: "center" }}>
+            <div style={{ width: 12, height: 12, background: "#F2F2F7", borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 6, height: 2, background: "#9CA3AF", borderRadius: 1 }} />
+            </div>
+            <div style={{ height: 5, width: 8, background: "#E5E7EB", borderRadius: 2 }} />
+            <div style={{ width: 12, height: 12, background: `${color}20`, borderRadius: 3, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ width: 6, height: 2, background: color, borderRadius: 1 }} />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
 }
 
-function WfCard({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ background: "#FFFFFF", border: "1px solid #F3F4F6", borderRadius: 6, padding: 6, marginBottom: 4, boxShadow: "0 1px 2px rgba(0,0,0,0.04)", flexShrink: 0 }}>
-      {children}
-    </div>
-  )
-}
-
-function WfProgressBar({ pct = 70, color = "#93C5FD" }: { pct?: number; color?: string }) {
-  return (
-    <div style={{ marginBottom: 5, flexShrink: 0 }}>
-      <div style={{ height: 7, background: "#F3F4F6", borderRadius: 4 }}>
-        <div style={{ height: 7, background: color, borderRadius: 4, width: `${pct}%` }} />
-      </div>
-    </div>
-  )
-}
+// ─── Individual wireframes ────────────────────────────────────────────────────
 
 function WireframeHome() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader />
-      <WfHero />
-      <WfChipRow />
-      <WfGrid2 rows={2} />
-      <WfBottomNav />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#F8F9FA" }}>
+      <WfTopBar color="#0068FF" title="Trang chủ" />
+      <WfHeroBanner color="#0068FF" />
+      <WfChips items={["Tất cả", "Áo", "Quần", "Giày"]} color="#0068FF" />
+      <WfProductGrid seeds={["a", "b", "c", "d"]} color="#0068FF" />
+      <WfBottomNav active={0} color="#0068FF" labels={["🏠", "🔍", "👤"]} />
     </div>
   )
 }
 
 function WireframeProductList() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#F8F9FA" }}>
+      <WfTopBar color="#0068FF" title="Khám phá" />
       <WfSearchBar />
-      <WfChipRow count={3} />
-      <WfGrid2 rows={3} />
-      <WfBottomNav />
+      <WfChips items={["Tất cả", "Thời trang", "Phụ kiện"]} color="#0068FF" />
+      <WfProductGrid seeds={["p1", "p2", "p3", "p4", "p5", "p6"]} color="#0068FF" />
+      <WfBottomNav active={1} color="#0068FF" labels={["🏠", "🔍", "🛒"]} />
     </div>
   )
 }
 
 function WireframeDetail() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader />
-      {/* Hero image */}
-      <div style={{ height: 60, background: "#D1D5DB", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
-      {/* Tag chips */}
-      <div style={{ display: "flex", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
-        <div style={{ height: 11, width: 36, background: "#DBEAFE", borderRadius: 5, flexShrink: 0 }} />
-        <div style={{ height: 11, width: 40, background: "#D1FAE5", borderRadius: 5, flexShrink: 0 }} />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#fff" }}>
+      <WfTopBar color="#0068FF" title="Chi tiết" hasBack />
+      {/* Hero */}
+      <div style={{ height: 68, background: "linear-gradient(135deg, #E8F4FF, #BFDBFE)", flexShrink: 0, position: "relative" }}>
+        <div style={{ position: "absolute", bottom: 8, left: 8, ...S.row, gap: 3 }}>
+          <div style={{ height: 12, width: 28, background: "#DBEAFE", borderRadius: 4, border: "1px solid #BFDBFE" }} />
+          <div style={{ height: 12, width: 32, background: "#D1FAE5", borderRadius: 4, border: "1px solid #A7F3D0" }} />
+        </div>
       </div>
-      {/* Title */}
-      <div style={{ padding: "0 4px" }}>
-        <WfTextLine width="88%" bold />
+      {/* Content */}
+      <div style={{ padding: "8px 8px 0", flex: 1, ...S.col, gap: 5 }}>
+        <div style={{ height: 8, background: "#1F2937", borderRadius: 3, width: "85%" }} />
+        {/* Stars */}
+        <div style={{ ...S.row, gap: 2, alignItems: "center" }}>
+          {[1,2,3,4,5].map(i => <div key={i} style={{ width: 7, height: 7, background: "#FBBF24", borderRadius: "50%" }} />)}
+          <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: 28, marginLeft: 4 }} />
+        </div>
+        {/* Price */}
+        <div style={{ ...S.row, alignItems: "baseline", gap: 6 }}>
+          <div style={{ height: 11, background: "#0068FF", borderRadius: 3, width: 50 }} />
+          <div style={{ height: 7, background: "#E5E7EB", borderRadius: 3, width: 36 }} />
+        </div>
+        {/* Description */}
+        <div>
+          <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: "100%", marginBottom: 3 }} />
+          <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: "78%", marginBottom: 3 }} />
+          <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: "60%" }} />
+        </div>
+        {/* Progress */}
+        <div>
+          <div style={{ ...S.row, justifyContent: "space-between", marginBottom: 3 }}>
+            <div style={{ height: 5, background: "#9CA3AF", borderRadius: 3, width: 60 }} />
+            <div style={{ height: 5, background: "#0068FF", borderRadius: 3, width: 20 }} />
+          </div>
+          <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3 }}>
+            <div style={{ height: 5, background: "#0068FF", borderRadius: 3, width: "68%" }} />
+          </div>
+        </div>
       </div>
-      {/* Rating row */}
-      <div style={{ display: "flex", gap: 2, padding: "0 4px", alignItems: "center", marginBottom: 4, flexShrink: 0 }}>
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} style={{ width: 6, height: 6, background: "#FCD34D", borderRadius: "50%", flexShrink: 0 }} />
-        ))}
-        <div style={{ height: 5, width: 30, background: "#E5E7EB", borderRadius: 3, marginLeft: 3 }} />
-      </div>
-      {/* Price row */}
-      <div style={{ display: "flex", gap: 5, padding: "0 4px", alignItems: "center", marginBottom: 4, flexShrink: 0 }}>
-        <div style={{ height: 10, width: 48, background: "#3B82F6", borderRadius: 3, flexShrink: 0 }} />
-        <div style={{ height: 7, width: 32, background: "#E5E7EB", borderRadius: 3, flexShrink: 0 }} />
-      </div>
-      {/* Description */}
-      <div style={{ padding: "0 4px" }}>
-        <WfTextLine width="100%" />
-        <WfTextLine width="80%" />
-      </div>
-      {/* Progress bar */}
-      <div style={{ padding: "0 4px" }}>
-        <WfProgressBar pct={68} color="#3B82F6" />
-      </div>
-      {/* Dual CTA buttons */}
-      <div style={{ display: "flex", gap: 3, padding: "0 4px", marginTop: "auto" }}>
-        <div style={{ flex: 1, height: 20, background: "#E5E7EB", borderRadius: 5, flexShrink: 0 }} />
-        <div style={{ flex: 1, height: 20, background: "#3B82F6", borderRadius: 5, flexShrink: 0 }} />
+      {/* CTA */}
+      <div style={{ ...S.row, gap: 5, padding: "8px 8px 10px", flexShrink: 0, background: "#fff", borderTop: "1px solid #F1F1F1" }}>
+        <div style={{ flex: 1, height: 26, background: "#F2F2F7", borderRadius: 7 }} />
+        <div style={{ flex: 2, height: 26, background: "#0068FF", borderRadius: 7 }} />
       </div>
     </div>
   )
@@ -888,185 +995,260 @@ function WireframeDetail() {
 
 function WireframeCart() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader />
-      <WfListItem />
-      <WfListItem />
-      <WfListItem />
-      {/* Voucher input row */}
-      <WfCard>
-        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-          <div style={{ flex: 1, height: 14, background: "#F3F4F6", borderRadius: 4 }} />
-          <div style={{ width: 36, height: 14, background: "#E5E7EB", borderRadius: 4, flexShrink: 0 }} />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#F8F9FA" }}>
+      <WfTopBar color="#0068FF" title="Giỏ hàng (3)" hasBack />
+      <div style={{ flex: 1, ...S.col, overflow: "hidden" }}>
+        {/* Cart items */}
+        <div style={{ background: "#fff", marginBottom: 5 }}>
+          <WfCartItem color="#0068FF" />
+          <WfCartItem color="#0068FF" />
+          <WfCartItem color="#0068FF" />
         </div>
-      </WfCard>
-      {/* Order summary */}
-      <WfCard>
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <WfTextLine width="45%" />
-          <WfTextLine width="30%" />
+        {/* Voucher */}
+        <div style={{ background: "#fff", padding: "7px 8px", marginBottom: 5, ...S.row, gap: 5 }}>
+          <div style={{ flex: 1, height: 22, background: "#F2F2F7", borderRadius: 6, ...S.row, alignItems: "center", padding: "0 7px" }}>
+            <div style={{ height: 5, background: "#D1D5DB", borderRadius: 3, width: 60 }} />
+          </div>
+          <div style={{ width: 44, height: 22, background: "#0068FF", borderRadius: 6 }} />
         </div>
-        <div style={{ height: 1, background: "#F3F4F6", marginBottom: 4 }} />
-        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-          <WfTextLine width="50%" />
-          <WfTextLine width="25%" />
+        {/* Summary */}
+        <div style={{ background: "#fff", padding: "7px 8px", flex: 1 }}>
+          {[["Tạm tính", "#9CA3AF", "1.007K", "#374151"], ["Freeship", "#9CA3AF", "Miễn phí", "#059669"]].map(([l, lc, v, vc], i) => (
+            <div key={i} style={{ ...S.row, justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+              <div style={{ height: 5, background: lc, borderRadius: 3, width: 44 }} />
+              <div style={{ height: 5, background: vc, borderRadius: 3, width: 34 }} />
+            </div>
+          ))}
+          <div style={{ height: 1, background: "#F3F4F6", margin: "6px 0" }} />
+          <div style={{ ...S.row, justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ height: 7, background: "#1F2937", borderRadius: 3, width: 54 }} />
+            <div style={{ height: 8, background: "#0068FF", borderRadius: 3, width: 44 }} />
+          </div>
         </div>
-        <div style={{ height: 1, background: "#F3F4F6", marginBottom: 4 }} />
-        <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <WfTextLine width="48%" bold />
-          <WfTextLine width="32%" bold />
-        </div>
-      </WfCard>
-      <div style={{ marginTop: "auto" }}>
-        <WfButton />
       </div>
-      <WfBottomNav />
+      {/* Checkout */}
+      <div style={{ padding: "7px 8px 9px", background: "#fff", borderTop: "1px solid #F1F1F1", flexShrink: 0 }}>
+        <div style={{ height: 26, background: "#0068FF", borderRadius: 8 }} />
+      </div>
+      <WfBottomNav active={2} color="#0068FF" labels={["🏠", "🔍", "🛒"]} />
     </div>
   )
 }
 
 function WireframeProfile() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader />
-      {/* UserProfileCard */}
-      <WfCard>
-        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#D1D5DB", flexShrink: 0 }} />
-          <div style={{ flex: 1 }}>
-            <WfTextLine width="55%" bold />
-            <WfTextLine width="80%" />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#F8F9FA" }}>
+      <WfTopBar color="#0068FF" title="Cá nhân" />
+      {/* Profile card */}
+      <div style={{ background: "#fff", padding: "10px 8px 8px", marginBottom: 5 }}>
+        <div style={{ ...S.row, alignItems: "center", gap: 8 }}>
+          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "linear-gradient(135deg, #0068FF, #7C3AED)", flexShrink: 0, border: "2px solid #fff", boxShadow: "0 0 0 2px #0068FF20" }} />
+          <div>
+            <div style={{ height: 7, background: "#1F2937", borderRadius: 3, width: 70, marginBottom: 4 }} />
+            <div style={{ height: 5, background: "#9CA3AF", borderRadius: 3, width: 90 }} />
           </div>
         </div>
-      </WfCard>
-      {/* 3-col stat grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, padding: "0 0", marginBottom: 4, flexShrink: 0 }}>
-        {["#DBEAFE", "#FEF3C7", "#FCE7F3"].map((bg, i) => (
-          <div key={i} style={{ background: bg, borderRadius: 6, padding: 5 }}>
-            <div style={{ height: 9, background: "rgba(0,0,0,0.1)", borderRadius: 3, marginBottom: 3 }} />
-            <div style={{ height: 6, background: "rgba(0,0,0,0.07)", borderRadius: 3 }} />
+        {/* Stats row */}
+        <div style={{ ...S.row, gap: 0, marginTop: 10, borderTop: "1px solid #F3F4F6", paddingTop: 8 }}>
+          {[["48", "Bài đăng", "#0068FF"], ["1.2K", "Followers", "#7C3AED"], ["234", "Following", "#059669"]].map(([v, l, c], i) => (
+            <div key={i} style={{ flex: 1, ...S.col, alignItems: "center", gap: 2, borderRight: i < 2 ? "1px solid #F3F4F6" : "none" }}>
+              <div style={{ height: 8, background: c, borderRadius: 3, width: 24 }} />
+              <div style={{ height: 5, background: "#D1D5DB", borderRadius: 3, width: 28 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+      {/* Stat cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 5, padding: "0 7px", marginBottom: 5 }}>
+        {[["#DBEAFE", "#0068FF"], ["#FEF3C7", "#F59E0B"], ["#FCE7F3", "#EC4899"]].map(([bg, c], i) => (
+          <div key={i} style={{ background: bg, borderRadius: 8, padding: "6px 5px" }}>
+            <div style={{ height: 9, background: c, borderRadius: 3, width: "55%", marginBottom: 4, opacity: 0.7 }} />
+            <div style={{ height: 5, background: "rgba(0,0,0,0.15)", borderRadius: 3 }} />
           </div>
         ))}
       </div>
-      {/* Settings card with switches and list items */}
-      <WfCard>
-        {[{ on: true }, { on: false }].map(({ on }, i) => (
+      {/* Settings */}
+      <div style={{ background: "#fff", borderRadius: 10, margin: "0 7px" }}>
+        {[true, false].map((on, i) => (
           <React.Fragment key={i}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-              <div style={{ flex: 1 }}>
-                <WfTextLine width="60%" />
+            <div style={{ ...S.row, justifyContent: "space-between", alignItems: "center", padding: "7px 8px" }}>
+              <div>
+                <div style={{ height: 6, background: "#374151", borderRadius: 3, width: 70, marginBottom: 3 }} />
+                <div style={{ height: 4, background: "#D1D5DB", borderRadius: 3, width: 50 }} />
               </div>
-              <div style={{ width: 22, height: 11, background: on ? "#3B82F6" : "#D1D5DB", borderRadius: 6, flexShrink: 0 }} />
+              <div style={{ width: 26, height: 14, background: on ? "#0068FF" : "#D1D5DB", borderRadius: 7, flexShrink: 0, position: "relative" }}>
+                <div style={{ position: "absolute", top: 2, [on ? "right" : "left"]: 2, width: 10, height: 10, background: "#fff", borderRadius: "50%" }} />
+              </div>
             </div>
-            <div style={{ height: 1, background: "#F3F4F6", marginBottom: 4 }} />
+            {i < 1 && <div style={{ height: 1, background: "#F3F4F6", margin: "0 8px" }} />}
           </React.Fragment>
         ))}
-        <WfTextLine width="55%" />
-        <div style={{ height: 1, background: "#F3F4F6", margin: "4px 0" }} />
-        <WfTextLine width="70%" />
-      </WfCard>
-      {/* Logout button */}
-      <WfButton color="#E5E7EB" />
-      <WfBottomNav />
+      </div>
+      <WfBottomNav active={2} color="#0068FF" labels={["🏠", "🔍", "👤"]} />
     </div>
   )
 }
 
 function WireframeNotifications() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader />
-      <div style={{ height: 20, background: "#DBEAFE", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
-      <WfChipRow count={3} />
-      <WfListItem />
-      <WfListItem />
-      <WfListItem />
-      <WfListItem />
-      <WfListItem />
-      <WfBottomNav />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#F8F9FA" }}>
+      <WfTopBar color="#0068FF" title="Thông báo" />
+      {/* Info banner */}
+      <div style={{ margin: "6px 7px 0", background: "#EFF6FF", borderRadius: 8, padding: "6px 8px", ...S.row, gap: 5, alignItems: "center", flexShrink: 0 }}>
+        <div style={{ width: 14, height: 14, background: "#BFDBFE", borderRadius: "50%", flexShrink: 0 }} />
+        <div style={{ height: 5, background: "#93C5FD", borderRadius: 3, width: 90 }} />
+      </div>
+      <WfChips items={["Tất cả", "Đơn hàng", "Khuyến mãi"]} color="#0068FF" />
+      <div style={{ flex: 1, background: "#fff", overflow: "hidden" }}>
+        <WfNotifItem color="#059669" unread />
+        <WfNotifItem color="#F59E0B" unread />
+        <WfNotifItem color="#0068FF" unread />
+        <WfNotifItem color="#7C3AED" />
+        <WfNotifItem color="#6B7280" />
+      </div>
+      <WfBottomNav active={1} color="#0068FF" labels={["🏠", "🔔", "👤"]} />
     </div>
   )
 }
 
 function WireframeLogin() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#F9FAFB", alignItems: "center", padding: "8px 8px 0" }}>
-      <div style={{ width: 36, height: 36, background: "#DBEAFE", borderRadius: 10, marginBottom: 6, marginTop: 14, flexShrink: 0 }} />
-      <WfTextLine width="55%" bold />
-      <WfTextLine width="72%" />
-      <WfCard>
-        <div style={{ height: 16, background: "#F3F4F6", borderRadius: 4, marginBottom: 4 }} />
-        <div style={{ height: 16, background: "#F3F4F6", borderRadius: 4, marginBottom: 4 }} />
-        <WfButton />
-        <div style={{ height: 1, background: "#E5E7EB", margin: "4px 0" }} />
-        <WfButton color="#E5E7EB" />
-      </WfCard>
+    <div style={{ ...S.col, height: "100%", background: "#fff", alignItems: "center" }}>
+      <WfStatusBar />
+      {/* Logo area */}
+      <div style={{ ...S.col, alignItems: "center", padding: "16px 8px 8px" }}>
+        <div style={{ width: 44, height: 44, borderRadius: 14, background: "linear-gradient(135deg, #0068FF, #3B82F6)", marginBottom: 8, boxShadow: "0 4px 12px #0068FF40" }} />
+        <div style={{ height: 8, background: "#1F2937", borderRadius: 3, width: 70, marginBottom: 5 }} />
+        <div style={{ height: 5, background: "#9CA3AF", borderRadius: 3, width: 100 }} />
+      </div>
+      {/* Form card */}
+      <div style={{ margin: "6px 7px", background: "#fff", borderRadius: 12, padding: 10, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", width: "calc(100% - 14px)", flexShrink: 0 }}>
+        {["Số điện thoại", "Mật khẩu"].map((ph, i) => (
+          <div key={i} style={{ marginBottom: 7, background: "#F8F9FA", borderRadius: 8, padding: "8px 10px", border: "1px solid #E5E7EB" }}>
+            <div style={{ height: 4, background: "#9CA3AF", borderRadius: 3, width: 50, marginBottom: 4 }} />
+            <div style={{ height: 6, background: "#E5E7EB", borderRadius: 3, width: "60%" }} />
+          </div>
+        ))}
+        <div style={{ height: 26, background: "#0068FF", borderRadius: 8, marginBottom: 7 }} />
+        <div style={{ ...S.row, alignItems: "center", gap: 5, marginBottom: 7 }}>
+          <div style={{ flex: 1, height: 1, background: "#E5E7EB" }} />
+          <div style={{ height: 5, background: "#D1D5DB", borderRadius: 3, width: 16 }} />
+          <div style={{ flex: 1, height: 1, background: "#E5E7EB" }} />
+        </div>
+        <div style={{ height: 26, background: "#F2F2F7", borderRadius: 8 }} />
+      </div>
+      {/* Register link */}
+      <div style={{ ...S.row, gap: 4, alignItems: "center", marginTop: 4 }}>
+        <div style={{ height: 5, background: "#D1D5DB", borderRadius: 3, width: 56 }} />
+        <div style={{ height: 5, background: "#0068FF", borderRadius: 3, width: 40 }} />
+      </div>
     </div>
   )
 }
 
 function WireframeDashboard() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader />
-      <div style={{ padding: "0 4px" }}>
-        <WfTextLine width="55%" bold />
-        <WfTextLine width="80%" />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#F8F9FA" }}>
+      <WfTopBar color="#0068FF" title="Dashboard" />
+      {/* Greeting */}
+      <div style={{ padding: "7px 8px 4px" }}>
+        <div style={{ height: 7, background: "#1F2937", borderRadius: 3, width: 80, marginBottom: 4 }} />
+        <div style={{ height: 5, background: "#9CA3AF", borderRadius: 3, width: 110 }} />
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
-        {["#DBEAFE", "#D1FAE5", "#EDE9FE", "#FEF3C7"].map((bg, i) => (
-          <div key={i} style={{ background: bg, borderRadius: 6, padding: 5 }}>
-            <div style={{ height: 9, background: "rgba(0,0,0,0.1)", borderRadius: 3, marginBottom: 3, width: "45%" }} />
-            <div style={{ height: 6, background: "rgba(0,0,0,0.07)", borderRadius: 3 }} />
+      {/* KPI grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, padding: "5px 7px", flexShrink: 0 }}>
+        {[["#EFF6FF", "#0068FF", "128", "+12%"], ["#ECFDF5", "#059669", "4.2M", "+8%"], ["#F5F3FF", "#7C3AED", "96%", "+2%"], ["#FFFBEB", "#F59E0B", "4.8★", "→"]].map(([bg, c, v, trend], i) => (
+          <div key={i} style={{ background: bg, borderRadius: 8, padding: "7px 8px", boxShadow: "0 1px 3px rgba(0,0,0,0.05)" }}>
+            <div style={{ height: 10, background: c, borderRadius: 3, width: 30, marginBottom: 4 }} />
+            <div style={{ height: 5, background: "rgba(0,0,0,0.15)", borderRadius: 3, width: 44, marginBottom: 4 }} />
+            <div style={{ height: 5, background: c, borderRadius: 3, width: 24, opacity: 0.6 }} />
           </div>
         ))}
       </div>
-      <WfCard>
-        <WfProgressBar pct={72} color="#93C5FD" />
-        <WfProgressBar pct={85} color="#6EE7B7" />
-        <WfProgressBar pct={48} color="#FCD34D" />
-      </WfCard>
-      <WfListItem />
-      <WfListItem />
-      <WfListItem />
-      <WfBottomNav />
+      {/* Progress */}
+      <div style={{ background: "#fff", borderRadius: 8, margin: "5px 7px", padding: "7px 8px", flexShrink: 0 }}>
+        {[[72, "#0068FF"], [85, "#059669"], [48, "#F59E0B"]].map(([pct, c], i) => (
+          <div key={i} style={{ marginBottom: i < 2 ? 7 : 0 }}>
+            <div style={{ ...S.row, justifyContent: "space-between", marginBottom: 3 }}>
+              <div style={{ height: 5, background: "#9CA3AF", borderRadius: 3, width: 40 }} />
+              <div style={{ height: 5, background: c as string, borderRadius: 3, width: 20 }} />
+            </div>
+            <div style={{ height: 5, background: "#F3F4F6", borderRadius: 3 }}>
+              <div style={{ height: 5, background: c as string, borderRadius: 3, width: `${pct}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Recent list */}
+      <div style={{ flex: 1, background: "#fff", overflow: "hidden" }}>
+        {["#374151", "#9CA3AF", "#D1D5DB"].map((c, i) => (
+          <div key={i} style={{ ...S.row, justifyContent: "space-between", alignItems: "center", padding: "6px 8px", borderBottom: "1px solid #F5F5F5" }}>
+            <div>
+              <div style={{ height: 6, background: c, borderRadius: 3, width: 90, marginBottom: 3 }} />
+              <div style={{ height: 4, background: "#E5E7EB", borderRadius: 3, width: 60 }} />
+            </div>
+            <div style={{ width: 6, height: 10, borderRight: "1.5px solid #D1D5DB", borderTop: "1.5px solid #D1D5DB", transform: "rotate(45deg)" }} />
+          </div>
+        ))}
+      </div>
+      <WfBottomNav active={0} color="#0068FF" labels={["📊", "📦", "👤"]} />
     </div>
   )
 }
 
 function WireframeFoodOrder() {
+  const orange = "#FF6B35"
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader color="#FB923C" />
-      <div style={{ height: 20, background: "#FEF3C7", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
-      <WfChipRow />
-      <WfGrid2 rows={2} />
-      <WfBottomNav />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#FFF8F5" }}>
+      <WfTopBar color={orange} title="Đặt món" />
+      {/* Promo banner */}
+      <div style={{ margin: "6px 7px 0", background: "linear-gradient(135deg, #FFF3E0, #FFE0B2)", borderRadius: 8, padding: "6px 8px", ...S.row, gap: 5, alignItems: "center", flexShrink: 0, border: "1px solid #FFCC80" }}>
+        <div style={{ width: 14, height: 14, background: "#FF9800", borderRadius: "50%", flexShrink: 0 }} />
+        <div style={{ height: 5, background: "#F97316", borderRadius: 3, width: 90, opacity: 0.7 }} />
+      </div>
+      <WfChips items={["🍚 Cơm", "🍜 Phở", "🥗 Bún", "🧋 Uống"]} activeIdx={0} color={orange} />
+      <WfProductGrid seeds={["f1", "f2", "f3", "f4"]} color={orange} />
+      <WfBottomNav active={1} color={orange} labels={["🏠", "🍜", "🛒"]} />
     </div>
   )
 }
 
 function WireframeBooking() {
+  const purple = "#7C3AED"
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader color="#8B5CF6" />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
-        {[0, 1, 2, 3].map((i) => (
-          <div key={i} style={{ background: "#EDE9FE", borderRadius: 6, padding: 5, height: 32 }}>
-            <div style={{ height: 6, background: "rgba(124,58,237,0.25)", borderRadius: 3, marginBottom: 3, width: "65%" }} />
-            <div style={{ height: 5, background: "rgba(124,58,237,0.15)", borderRadius: 3 }} />
+    <div style={{ ...S.col, height: "100%", overflow: "hidden", background: "#FAFAFA" }}>
+      <WfTopBar color={purple} title="Đặt lịch" hasBack />
+      {/* Service grid */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, padding: "7px 7px 0", flexShrink: 0 }}>
+        {[["✂️", "Cắt tóc", "80K"], ["🎨", "Nhuộm", "250K"], ["💆", "Massage", "150K"], ["💅", "Nail", "120K"]].map(([em, l, p], i) => (
+          <div key={i} style={{ background: i === 0 ? `${purple}15` : "#F5F3FF", borderRadius: 8, padding: "8px 7px", border: `1.5px solid ${i === 0 ? purple : "transparent"}` }}>
+            <div style={{ fontSize: 12, marginBottom: 4 }}>{em}</div>
+            <div style={{ height: 6, background: i === 0 ? purple : "#C4B5FD", borderRadius: 3, width: "70%", marginBottom: 3 }} />
+            <div style={{ height: 5, background: "#DDD6FE", borderRadius: 3, width: "50%" }} />
           </div>
         ))}
       </div>
-      {/* Time slot chips */}
-      <div style={{ display: "flex", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
-        {[32, 30, 30, 30].map((w, i) => (
-          <div key={i} style={{ height: 14, width: w, background: i === 1 ? "#8B5CF6" : "#E5E7EB", borderRadius: 7, flexShrink: 0 }} />
+      {/* Time slots */}
+      <div style={{ ...S.row, gap: 4, padding: "7px 7px 0", flexShrink: 0 }}>
+        {[false, true, false, false].map((active, i) => (
+          <div key={i} style={{ height: 22, flex: 1, background: active ? purple : "#F2F2F7", borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ height: 5, width: 20, background: active ? "rgba(255,255,255,0.9)" : "#C4C4C8", borderRadius: 3 }} />
+          </div>
         ))}
       </div>
-      <WfProgressBar pct={60} color="#8B5CF6" />
-      <div style={{ marginTop: "auto" }}>
-        <WfButton color="#8B5CF6" />
+      {/* Progress */}
+      <div style={{ padding: "7px 7px 0" }}>
+        <div style={{ ...S.row, justifyContent: "space-between", marginBottom: 3 }}>
+          <div style={{ height: 5, background: "#9CA3AF", borderRadius: 3, width: 70 }} />
+          <div style={{ height: 5, background: purple, borderRadius: 3, width: 24 }} />
+        </div>
+        <div style={{ height: 6, background: "#EDE9FE", borderRadius: 4 }}>
+          <div style={{ height: 6, background: purple, borderRadius: 4, width: "60%" }} />
+        </div>
+      </div>
+      {/* CTA */}
+      <div style={{ padding: "7px 7px 0", flexShrink: 0 }}>
+        <div style={{ height: 28, background: purple, borderRadius: 8 }} />
       </div>
     </div>
   )
@@ -1074,18 +1256,29 @@ function WireframeBooking() {
 
 function WireframeOnboarding() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#3B82F6", alignItems: "center", padding: "10px 8px 8px" }}>
-      <div style={{ width: "100%", height: 72, background: "rgba(255,255,255,0.2)", borderRadius: 8, marginBottom: 10, flexShrink: 0 }} />
-      <div style={{ height: 9, background: "rgba(255,255,255,0.7)", borderRadius: 4, width: "65%", marginBottom: 5, flexShrink: 0 }} />
-      <div style={{ height: 6, background: "rgba(255,255,255,0.4)", borderRadius: 3, width: "88%", marginBottom: 3, flexShrink: 0 }} />
-      <div style={{ height: 6, background: "rgba(255,255,255,0.4)", borderRadius: 3, width: "72%", marginBottom: 10, flexShrink: 0 }} />
-      <div style={{ display: "flex", gap: 4, marginBottom: 10, flexShrink: 0 }}>
+    <div style={{ ...S.col, height: "100%", background: "linear-gradient(160deg, #0068FF 0%, #3B82F6 60%, #7C3AED 100%)", alignItems: "center", padding: "0 8px 10px" }}>
+      <WfStatusBar light />
+      {/* Illustration */}
+      <div style={{ width: "100%", flex: 1, background: "rgba(255,255,255,0.13)", borderRadius: 12, margin: "8px 0", maxHeight: 90, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+        <div style={{ ...S.row, gap: 5 }}>
+          {[40, 52, 40].map((h, i) => (
+            <div key={i} style={{ width: 24, height: h, background: "rgba(255,255,255,0.2)", borderRadius: 6, flexShrink: 0 }} />
+          ))}
+        </div>
+      </div>
+      {/* Text */}
+      <div style={{ height: 10, background: "rgba(255,255,255,0.9)", borderRadius: 5, width: "68%", marginBottom: 6 }} />
+      <div style={{ height: 5, background: "rgba(255,255,255,0.5)", borderRadius: 3, width: "85%", marginBottom: 3 }} />
+      <div style={{ height: 5, background: "rgba(255,255,255,0.5)", borderRadius: 3, width: "70%", marginBottom: 10 }} />
+      {/* Dots */}
+      <div style={{ ...S.row, gap: 5, marginBottom: 10, alignItems: "center" }}>
         {[true, false, false].map((active, i) => (
-          <div key={i} style={{ width: active ? 16 : 8, height: 7, background: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)", borderRadius: 4 }} />
+          <div key={i} style={{ width: active ? 20 : 7, height: 7, background: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.35)", borderRadius: 4, transition: "width 0.2s" }} />
         ))}
       </div>
-      <div style={{ height: 22, background: "rgba(255,255,255,0.9)", borderRadius: 6, width: "100%", marginBottom: 7, flexShrink: 0 }} />
-      <div style={{ height: 6, background: "rgba(255,255,255,0.5)", borderRadius: 3, width: "55%", flexShrink: 0 }} />
+      {/* CTA */}
+      <div style={{ width: "100%", height: 28, background: "rgba(255,255,255,0.95)", borderRadius: 9, marginBottom: 7, boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }} />
+      <div style={{ height: 5, background: "rgba(255,255,255,0.45)", borderRadius: 3, width: "50%" }} />
     </div>
   )
 }
@@ -1198,12 +1391,12 @@ export function TemplateModal({ onClose }: TemplateModalProps) {
               >
                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input
+              <Input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm kiếm template..."
-                className="w-full pl-7 pr-3 py-1.5 text-[12px] border border-zinc-200 rounded-lg bg-zinc-50 focus:outline-none focus:border-blue-400 focus:bg-white transition-colors placeholder:text-zinc-400"
+                className="pl-7 pr-3 h-7 text-[12px] bg-zinc-50 focus-visible:bg-white"
               />
             </div>
 
@@ -1241,26 +1434,41 @@ export function TemplateModal({ onClose }: TemplateModalProps) {
                   onClick={() => setSelectedId(t.id)}
                   onMouseEnter={() => setHoveredId(t.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 ${
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 relative ${
                     selectedId === t.id
-                      ? "bg-blue-50 border-r-2 border-[#0068FF]"
-                      : "hover:bg-zinc-50 border-r-2 border-transparent"
+                      ? "bg-blue-50/80"
+                      : "hover:bg-zinc-50"
                   }`}
                 >
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 transition-colors ${
-                    selectedId === t.id ? "bg-blue-100" : "bg-zinc-100"
-                  }`}>
+                  {/* Active bar */}
+                  {selectedId === t.id && (
+                    <div className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#0068FF]" />
+                  )}
+                  {/* Emoji icon with colored bg */}
+                  <div
+                    className="w-9 h-9 rounded-xl flex items-center justify-center text-[15px] shrink-0 transition-all"
+                    style={{
+                      background: selectedId === t.id ? `${CATEGORY_DOT[t.category]}18` : "#F3F4F6",
+                      border: selectedId === t.id ? `1.5px solid ${CATEGORY_DOT[t.category]}30` : "1.5px solid transparent",
+                    }}
+                  >
                     {t.emoji}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className={`text-[12px] font-semibold truncate mb-0.5 ${
+                    <div className={`text-[12px] font-semibold truncate mb-1 ${
                       selectedId === t.id ? "text-[#0068FF]" : "text-zinc-700"
                     }`}>
                       {t.name}
                     </div>
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${CATEGORY_COLORS[t.category]}`}>
-                      {CATEGORY_LABELS[t.category]}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full shrink-0"
+                        style={{ background: CATEGORY_DOT[t.category] }}
+                      />
+                      <span className="text-[10px] text-zinc-400 font-medium">
+                        {CATEGORY_LABELS[t.category]}
+                      </span>
+                    </div>
                   </div>
                 </button>
               ))
@@ -1290,67 +1498,84 @@ export function TemplateModal({ onClose }: TemplateModalProps) {
         </div>
 
         {/* ── Right panel ─────────────────────────────────────────────────── */}
-        <div className="flex flex-col flex-1 bg-zinc-50 min-w-0">
+        <div className="flex flex-col flex-1 min-w-0" style={{ background: "radial-gradient(ellipse at 60% 20%, #EFF6FF 0%, #F8FAFF 50%, #F0F4FF 100%)" }}>
           {/* Preview area */}
-          <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-hidden">
+          <div className="flex-1 flex flex-col items-center justify-center overflow-hidden" style={{ padding: "28px 24px 16px" }}>
             {hoveredId === "blank" || (!hoveredId && !selectedId) ? (
-              <div className="flex flex-col items-center gap-3 text-zinc-400">
-                <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-zinc-300 flex items-center justify-center">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-20 h-20 rounded-3xl border-2 border-dashed border-zinc-300 bg-white flex items-center justify-center shadow-sm">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
                   </svg>
                 </div>
-                <p className="text-[13px] font-medium text-zinc-500">Canvas trắng</p>
+                <p className="text-[13px] font-semibold text-zinc-500">Canvas trắng</p>
                 <p className="text-[11px] text-zinc-400">Tự do thiết kế từ đầu</p>
               </div>
             ) : WireframeComponent ? (
-              <>
-                {/* Phone mockup */}
-                <div
-                  key={previewId}
-                  style={{
-                    width: 200,
-                    height: 380,
-                    borderRadius: 26,
-                    boxShadow: "0 0 0 7px #1F2937, 0 16px 40px rgba(0,0,0,0.28)",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                    animation: "tmPreviewFade 120ms ease-in-out",
-                    flexShrink: 0,
-                    background: "#fff",
-                  }}
-                >
-                  {/* Notch */}
-                  <div style={{ height: 18, background: "#1F2937", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 3, flexShrink: 0 }}>
-                    <div style={{ width: 52, height: 7, background: "#374151", borderRadius: 4 }} />
+              <div className="flex flex-col items-center gap-5">
+                {/* Phone shell */}
+                <div style={{
+                  position: "relative",
+                  width: 186,
+                  flexShrink: 0,
+                  animation: "tmPreviewFade 150ms ease-out",
+                }} key={previewId}>
+                  {/* Outer frame */}
+                  <div style={{
+                    borderRadius: 36,
+                    background: "linear-gradient(160deg, #2D3748 0%, #1A202C 100%)",
+                    padding: 6,
+                    boxShadow: "0 20px 48px rgba(0,0,0,0.32), 0 0 0 1px rgba(255,255,255,0.08) inset, -3px 0 8px rgba(0,0,0,0.3)",
+                  }}>
+                    {/* Screen */}
+                    <div style={{
+                      borderRadius: 30,
+                      overflow: "hidden",
+                      background: "#fff",
+                      height: 372,
+                      display: "flex",
+                      flexDirection: "column",
+                    }}>
+                      <div style={{ flex: 1, overflow: "hidden" }}>
+                        <WireframeComponent />
+                      </div>
+                      {/* Home indicator */}
+                      <div style={{ height: 14, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(255,255,255,0.95)", flexShrink: 0 }}>
+                        <div style={{ width: 44, height: 4, background: "#C7C7CC", borderRadius: 2 }} />
+                      </div>
+                    </div>
                   </div>
-                  {/* Screen content */}
-                  <div style={{ flex: 1, overflow: "hidden", padding: 5 }}>
-                    <WireframeComponent />
-                  </div>
+                  {/* Side buttons */}
+                  <div style={{ position: "absolute", right: -4, top: 80, width: 4, height: 24, background: "#374151", borderRadius: "0 3px 3px 0" }} />
+                  <div style={{ position: "absolute", left: -4, top: 70, width: 4, height: 18, background: "#374151", borderRadius: "3px 0 0 3px" }} />
+                  <div style={{ position: "absolute", left: -4, top: 96, width: 4, height: 28, background: "#374151", borderRadius: "3px 0 0 3px" }} />
+                  <div style={{ position: "absolute", left: -4, top: 130, width: 4, height: 28, background: "#374151", borderRadius: "3px 0 0 3px" }} />
                 </div>
 
-                {/* Template info below mockup */}
-                <div className="mt-5 text-center">
-                  <h3 className="text-sm font-bold text-zinc-800 mb-1">{previewTemplate.name}</h3>
-                  <p className="text-[11px] text-zinc-500 leading-relaxed max-w-[260px]">
+                {/* Template info */}
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-2 mb-1.5">
+                    <span className="text-lg">{previewTemplate.emoji}</span>
+                    <h3 className="text-sm font-bold text-zinc-800">{previewTemplate.name}</h3>
+                  </div>
+                  <p className="text-[11px] text-zinc-500 leading-relaxed max-w-[240px]">
                     {previewTemplate.description}
                   </p>
                 </div>
-              </>
+              </div>
             ) : null}
           </div>
 
           {/* Apply button */}
-          <div className="px-5 pb-5 pt-3 border-t border-zinc-200 bg-white shrink-0">
+          <div className="px-5 pb-5 pt-3 shrink-0" style={{ borderTop: "1px solid rgba(0,0,0,0.06)", background: "rgba(255,255,255,0.7)", backdropFilter: "blur(8px)" }}>
             {hoveredId !== "blank" && selectedId ? (
               <button
                 onClick={handleApply}
-                className="w-full py-2.5 bg-[#0068FF] text-white text-[13px] font-semibold rounded-xl hover:bg-[#0055D4] transition-all active:scale-[0.97] shadow-sm"
+                className="w-full py-2.5 text-white text-[13px] font-semibold rounded-xl transition-all active:scale-[0.97]"
+                style={{ background: "linear-gradient(135deg, #0068FF, #3B82F6)", boxShadow: "0 4px 12px #0068FF40" }}
               >
-                Áp dụng template này
+                Áp dụng template này →
               </button>
             ) : (
               <button

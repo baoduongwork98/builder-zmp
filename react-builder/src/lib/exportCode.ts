@@ -251,6 +251,17 @@ function generateBottomNavFile(props: Record<string, unknown>): string {
   const tabsJson = JSON.stringify(tabs, null, 2)
 
   return `import { useNavigate } from "zmp-ui"
+import { RiHomeLine, RiSearchLine, RiUserLine, RiStarLine, RiShoppingCartLine, RiHeartLine, RiSettings3Line } from "react-icons/ri"
+
+const iconMap = {
+  "🏠": RiHomeLine,
+  "🔍": RiSearchLine,
+  "👤": RiUserLine,
+  "⭐": RiStarLine,
+  "🛒": RiShoppingCartLine,
+  "❤️": RiHeartLine,
+  "⚙️": RiSettings3Line,
+}
 
 const tabs = ${tabsJson}
 
@@ -259,16 +270,19 @@ export default function BottomNavigation() {
 
   return (
     <div className="fixed bottom-0 left-0 w-full flex items-center justify-around bg-white border-t border-gray-200 h-14 px-2 shrink-0">
-      {tabs.map((tab) => (
-        <button
-          key={tab.key}
-          className="flex flex-col items-center gap-0.5 flex-1"
-          onClick={() => { if (tab.route) navigate(tab.route) }}
-        >
-          <span className="text-xl leading-none">{tab.icon}</span>
-          <span className="text-[10px] font-medium text-gray-500">{tab.label}</span>
-        </button>
-      ))}
+      {tabs.map((tab) => {
+        const IconComp = iconMap[tab.icon as keyof typeof iconMap]
+        return (
+          <button
+            key={tab.key}
+            className="flex flex-col items-center gap-0.5 flex-1"
+            onClick={() => { if (tab.route) navigate(tab.route) }}
+          >
+            {IconComp ? <IconComp style={{ fontSize: 22, color: "#6B7280" }} /> : <span className="text-xl leading-none">{tab.icon}</span>}
+            <span className="text-[10px] font-medium text-gray-500">{tab.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -585,6 +599,7 @@ function generatePackageJson(appConfig: AppConfig): string {
         jotai: "^2.12.1",
         react: "^18.3.1",
         "react-dom": "^18.3.1",
+        "react-icons": "^5.0.0",
         "zmp-sdk": "latest",
         "zmp-ui": "latest",
       },
