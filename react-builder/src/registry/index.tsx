@@ -159,7 +159,16 @@ const stackDef: ComponentDefinition = {
         background: props.background as string,
       }}
     >
-      {children ?? <span className="text-gray-400 text-xs p-2">Thả component vào đây</span>}
+      {children ?? (
+        <div
+          className="flex flex-col items-center justify-center gap-1 py-4 rounded-lg w-full"
+          style={{ border: "2px dashed rgba(0,104,255,0.2)" }}
+        >
+          <span className="text-xs font-medium" style={{ color: "rgba(0,104,255,0.4)" }}>
+            Thả component vào đây
+          </span>
+        </div>
+      )}
     </div>
   ),
   toJSX: (props, renderChildren, level) => {
@@ -191,9 +200,14 @@ const dividerDef: ComponentDefinition = {
   renderer: (props) => {
     const marginClass: Record<string, string> = { none: "my-0", sm: "my-2", md: "my-4", lg: "my-8" }
     return (
-      <hr
-        className={marginClass[props.margin as string]}
-        style={{ borderColor: props.color as string, borderTopWidth: props.thickness as string }}
+      <div
+        className={`w-full ${marginClass[props.margin as string] ?? "my-4"}`}
+        style={{
+          height: props.thickness as string,
+          background: props.color as string,
+          opacity: 0.5,
+          borderRadius: 9999,
+        }}
       />
     )
   },
@@ -718,7 +732,16 @@ const gridDef: ComponentDefinition = {
       className={`grid gap-${props.gap as string} p-${props.padding as string} min-h-[60px]`}
       style={{ gridTemplateColumns: `repeat(${props.columns as string}, minmax(0, 1fr))` }}
     >
-      {children ?? <span className="text-gray-400 text-xs col-span-full p-2 text-center">Thả component vào đây</span>}
+      {children ?? (
+        <div
+          className="col-span-full flex items-center justify-center py-4 rounded-lg"
+          style={{ border: "2px dashed rgba(0,104,255,0.2)" }}
+        >
+          <span className="text-xs font-medium" style={{ color: "rgba(0,104,255,0.4)" }}>
+            Thả component vào đây
+          </span>
+        </div>
+      )}
     </div>
   ),
   toJSX: (props, renderChildren, level) => {
@@ -745,8 +768,13 @@ const spacerDef: ComponentDefinition = {
   },
   renderer: (props) => (
     <div
-      className={`shrink-0 bg-dashed ${props.direction === "horizontal" ? `w-${props.size as string}` : `h-${props.size as string} w-full`}`}
-      style={{ outline: "1px dashed #d1d5db", outlineOffset: "-1px", opacity: 0.5 }}
+      className={`shrink-0 ${props.direction === "horizontal" ? `w-${props.size as string}` : `h-${props.size as string} w-full`}`}
+      style={{
+        background:
+          "repeating-linear-gradient(45deg, rgba(0,104,255,0.06) 0px, rgba(0,104,255,0.06) 1px, transparent 1px, transparent 6px)",
+        borderRadius: 4,
+        opacity: 0.8,
+      }}
     />
   ),
   toJSX: (props, _renderChildren, level) => {
