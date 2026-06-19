@@ -5,10 +5,12 @@ import { useBuilderStore } from "@/store/builderStore"
 interface PhoneMockupProps {
   children: React.ReactNode
   bottomNav?: React.ReactNode
+  themeColor?: string
 }
 
-export function PhoneMockup({ children, bottomNav }: PhoneMockupProps) {
-  const themeColor = useBuilderStore((s) => s.appConfig.themeColor)
+export function PhoneMockup({ children, bottomNav, themeColor: themeColorProp }: PhoneMockupProps) {
+  const storeThemeColor = useBuilderStore((s) => s.appConfig.themeColor)
+  const themeColor = themeColorProp ?? storeThemeColor
 
   return (
     <div className="flex items-start justify-center py-10 px-4">
