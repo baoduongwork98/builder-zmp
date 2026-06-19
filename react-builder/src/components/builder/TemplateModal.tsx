@@ -748,6 +748,311 @@ const CATEGORY_COLORS: Record<string, string> = {
   services:  "text-teal-600 bg-teal-50 border-teal-100",
 }
 
+// ─── CSS Wireframe components ─────────────────────────────────────────────────
+
+function WfHeader({ color = "#93C5FD" }: { color?: string }) {
+  return <div style={{ height: 28, background: color, borderRadius: "4px 4px 0 0", marginBottom: 4, flexShrink: 0 }} />
+}
+
+function WfHero() {
+  return <div style={{ height: 56, background: "#D1D5DB", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
+}
+
+function WfSearchBar() {
+  return (
+    <div style={{ height: 18, background: "#E5E7EB", borderRadius: 9, marginBottom: 4, marginLeft: 4, marginRight: 4, flexShrink: 0 }} />
+  )
+}
+
+function WfChipRow() {
+  return (
+    <div style={{ display: "flex", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
+      {[38, 32, 28, 34].map((w, i) => (
+        <div key={i} style={{ height: 14, width: w, background: i === 0 ? "#93C5FD" : "#E5E7EB", borderRadius: 7, flexShrink: 0 }} />
+      ))}
+    </div>
+  )
+}
+
+function WfGrid2({ rows = 2 }: { rows?: number }) {
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "0 4px", marginBottom: 4 }}>
+      {Array(rows * 2).fill(0).map((_, i) => (
+        <div key={i} style={{ background: "#F3F4F6", borderRadius: 4, padding: 4 }}>
+          <div style={{ height: 28, background: "#D1D5DB", borderRadius: 3, marginBottom: 3 }} />
+          <div style={{ height: 7, background: "#E5E7EB", borderRadius: 3, marginBottom: 2 }} />
+          <div style={{ height: 7, background: "#E5E7EB", borderRadius: 3, width: "55%" }} />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function WfBottomNav() {
+  return (
+    <div style={{ height: 28, background: "#F9FAFB", borderTop: "1px solid #E5E7EB", display: "flex", alignItems: "center", justifyContent: "space-around", flexShrink: 0, marginTop: "auto" }}>
+      {[1, 2, 3].map((i) => (
+        <div key={i} style={{ width: 14, height: 14, background: "#D1D5DB", borderRadius: "50%" }} />
+      ))}
+    </div>
+  )
+}
+
+function WfTextLine({ width = "100%", bold = false }: { width?: string; bold?: boolean }) {
+  return <div style={{ height: bold ? 9 : 6, background: bold ? "#9CA3AF" : "#E5E7EB", borderRadius: 3, width, marginBottom: 3, flexShrink: 0 }} />
+}
+
+function WfButton({ color = "#93C5FD" }: { color?: string }) {
+  return <div style={{ height: 22, background: color, borderRadius: 6, marginBottom: 4, flexShrink: 0 }} />
+}
+
+function WfListItem() {
+  return (
+    <div style={{ display: "flex", gap: 6, padding: "5px 4px", borderBottom: "1px solid #F3F4F6", alignItems: "center", flexShrink: 0 }}>
+      <div style={{ width: 24, height: 24, background: "#E5E7EB", borderRadius: "50%", flexShrink: 0 }} />
+      <div style={{ flex: 1 }}>
+        <div style={{ height: 6, background: "#D1D5DB", borderRadius: 3, marginBottom: 3, width: "65%" }} />
+        <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3, width: "45%" }} />
+      </div>
+    </div>
+  )
+}
+
+function WfCard({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ background: "#FFFFFF", border: "1px solid #F3F4F6", borderRadius: 6, padding: 6, marginBottom: 4, boxShadow: "0 1px 2px rgba(0,0,0,0.04)", flexShrink: 0 }}>
+      {children}
+    </div>
+  )
+}
+
+function WfProgressBar({ pct = 70, color = "#93C5FD" }: { pct?: number; color?: string }) {
+  return (
+    <div style={{ marginBottom: 5, flexShrink: 0 }}>
+      <div style={{ height: 7, background: "#F3F4F6", borderRadius: 4 }}>
+        <div style={{ height: 7, background: color, borderRadius: 4, width: `${pct}%` }} />
+      </div>
+    </div>
+  )
+}
+
+function WireframeHome() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader />
+      <WfHero />
+      <WfChipRow />
+      <WfGrid2 rows={2} />
+      <WfBottomNav />
+    </div>
+  )
+}
+
+function WireframeProductList() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader />
+      <WfSearchBar />
+      <WfChipRow />
+      <WfGrid2 rows={3} />
+      <WfBottomNav />
+    </div>
+  )
+}
+
+function WireframeDetail() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader />
+      <div style={{ height: 64, background: "#D1D5DB", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
+      <div style={{ padding: "0 4px" }}>
+        <WfTextLine width="80%" bold />
+        <WfTextLine width="50%" />
+        <WfTextLine width="100%" bold />
+        <WfTextLine width="90%" />
+        <WfTextLine width="75%" />
+      </div>
+      <div style={{ padding: "0 4px", marginTop: "auto" }}>
+        <WfButton />
+      </div>
+    </div>
+  )
+}
+
+function WireframeCart() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader />
+      <WfListItem />
+      <WfListItem />
+      <WfListItem />
+      <WfCard>
+        <WfTextLine width="100%" />
+        <WfTextLine width="65%" />
+        <WfTextLine width="100%" bold />
+      </WfCard>
+      <div style={{ padding: "0 0", marginTop: "auto" }}>
+        <WfButton />
+      </div>
+      <WfBottomNav />
+    </div>
+  )
+}
+
+function WireframeProfile() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader />
+      <WfCard>
+        <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+          <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#D1D5DB", flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <WfTextLine width="55%" bold />
+            <WfTextLine width="80%" />
+          </div>
+        </div>
+      </WfCard>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, padding: "0 0", marginBottom: 4, flexShrink: 0 }}>
+        {["#DBEAFE", "#FEF3C7", "#FCE7F3"].map((bg, i) => (
+          <div key={i} style={{ background: bg, borderRadius: 6, padding: 5 }}>
+            <div style={{ height: 9, background: "rgba(0,0,0,0.1)", borderRadius: 3, marginBottom: 3 }} />
+            <div style={{ height: 6, background: "rgba(0,0,0,0.07)", borderRadius: 3 }} />
+          </div>
+        ))}
+      </div>
+      <WfListItem />
+      <WfListItem />
+      <WfListItem />
+      <WfBottomNav />
+    </div>
+  )
+}
+
+function WireframeNotifications() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader />
+      <div style={{ height: 20, background: "#DBEAFE", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
+      <WfChipRow />
+      <WfListItem />
+      <WfListItem />
+      <WfListItem />
+      <WfListItem />
+      <WfBottomNav />
+    </div>
+  )
+}
+
+function WireframeLogin() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#F9FAFB", alignItems: "center", padding: "8px 8px 0" }}>
+      <div style={{ width: 36, height: 36, background: "#DBEAFE", borderRadius: 10, marginBottom: 6, marginTop: 14, flexShrink: 0 }} />
+      <WfTextLine width="55%" bold />
+      <WfTextLine width="72%" />
+      <WfCard>
+        <div style={{ height: 16, background: "#F3F4F6", borderRadius: 4, marginBottom: 4 }} />
+        <div style={{ height: 16, background: "#F3F4F6", borderRadius: 4, marginBottom: 4 }} />
+        <WfButton />
+        <div style={{ height: 1, background: "#E5E7EB", margin: "4px 0" }} />
+        <WfButton color="#E5E7EB" />
+      </WfCard>
+    </div>
+  )
+}
+
+function WireframeDashboard() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader />
+      <div style={{ padding: "0 4px" }}>
+        <WfTextLine width="55%" bold />
+        <WfTextLine width="80%" />
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
+        {["#DBEAFE", "#D1FAE5", "#EDE9FE", "#FEF3C7"].map((bg, i) => (
+          <div key={i} style={{ background: bg, borderRadius: 6, padding: 5 }}>
+            <div style={{ height: 9, background: "rgba(0,0,0,0.1)", borderRadius: 3, marginBottom: 3, width: "45%" }} />
+            <div style={{ height: 6, background: "rgba(0,0,0,0.07)", borderRadius: 3 }} />
+          </div>
+        ))}
+      </div>
+      <WfCard>
+        <WfProgressBar pct={72} color="#93C5FD" />
+        <WfProgressBar pct={85} color="#6EE7B7" />
+        <WfProgressBar pct={48} color="#FCD34D" />
+      </WfCard>
+      <WfListItem />
+      <WfListItem />
+      <WfBottomNav />
+    </div>
+  )
+}
+
+function WireframeFoodOrder() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader color="#FDBA74" />
+      <div style={{ height: 20, background: "#FEF3C7", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
+      <WfChipRow />
+      <WfGrid2 rows={2} />
+      <WfBottomNav />
+    </div>
+  )
+}
+
+function WireframeBooking() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
+      <WfHeader color="#C4B5FD" />
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} style={{ background: "#EDE9FE", borderRadius: 6, padding: 5, height: 32 }}>
+            <div style={{ height: 6, background: "rgba(124,58,237,0.2)", borderRadius: 3, marginBottom: 3, width: "65%" }} />
+            <div style={{ height: 5, background: "rgba(124,58,237,0.1)", borderRadius: 3 }} />
+          </div>
+        ))}
+      </div>
+      <WfChipRow />
+      <WfProgressBar pct={60} color="#C4B5FD" />
+      <div style={{ padding: "0 0", marginTop: "auto" }}>
+        <WfButton color="#C4B5FD" />
+      </div>
+    </div>
+  )
+}
+
+function WireframeOnboarding() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#3B82F6", alignItems: "center", padding: "10px 8px 8px" }}>
+      <div style={{ width: "100%", height: 72, background: "rgba(255,255,255,0.2)", borderRadius: 8, marginBottom: 10, flexShrink: 0 }} />
+      <div style={{ height: 9, background: "rgba(255,255,255,0.7)", borderRadius: 4, width: "65%", marginBottom: 5, flexShrink: 0 }} />
+      <div style={{ height: 6, background: "rgba(255,255,255,0.4)", borderRadius: 3, width: "88%", marginBottom: 3, flexShrink: 0 }} />
+      <div style={{ height: 6, background: "rgba(255,255,255,0.4)", borderRadius: 3, width: "72%", marginBottom: 10, flexShrink: 0 }} />
+      <div style={{ display: "flex", gap: 4, marginBottom: 10, flexShrink: 0 }}>
+        {[true, false, false].map((active, i) => (
+          <div key={i} style={{ width: active ? 16 : 8, height: 7, background: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.4)", borderRadius: 4 }} />
+        ))}
+      </div>
+      <div style={{ height: 22, background: "rgba(255,255,255,0.9)", borderRadius: 6, width: "100%", marginBottom: 7, flexShrink: 0 }} />
+      <div style={{ height: 6, background: "rgba(255,255,255,0.5)", borderRadius: 3, width: "55%", flexShrink: 0 }} />
+    </div>
+  )
+}
+
+const TEMPLATE_WIREFRAMES: Record<string, React.FC> = {
+  home: WireframeHome,
+  "product-list": WireframeProductList,
+  detail: WireframeDetail,
+  cart: WireframeCart,
+  profile: WireframeProfile,
+  notifications: WireframeNotifications,
+  login: WireframeLogin,
+  dashboard: WireframeDashboard,
+  "food-order": WireframeFoodOrder,
+  booking: WireframeBooking,
+  onboarding: WireframeOnboarding,
+}
+
 // ─── TemplateModal ────────────────────────────────────────────────────────────
 
 interface TemplateModalProps {
