@@ -10,6 +10,7 @@ import { LayersPanel } from "@/components/builder/LayersPanel"
 import { VariablesPanel } from "@/components/builder/VariablesPanel"
 import { ApiPanel } from "@/components/builder/ApiPanel"
 import { useBuilderStore } from "@/store/builderStore"
+import { broadcastState } from "@/lib/previewChannel"
 import { RiLayoutLine, RiStackLine, RiDatabase2Line, RiFlashlightLine } from "react-icons/ri"
 
 function KeyboardShortcuts() {
@@ -45,6 +46,20 @@ function KeyboardShortcuts() {
   return null
 }
 
+function PreviewBroadcaster() {
+  useEffect(() => {
+    return useBuilderStore.subscribe((state) => {
+      broadcastState({
+        pages: state.pages,
+        appConfig: state.appConfig,
+        variables: state.variables,
+        apis: state.apis,
+      })
+    })
+  }, [])
+  return null
+}
+
 type LeftTab = "components" | "layers" | "variables" | "api"
 
 const LEFT_TABS: { key: LeftTab; icon: React.ElementType; label: string }[] = [
@@ -60,6 +75,7 @@ export default function BuilderContent() {
   return (
     <BuilderDnd>
       <KeyboardShortcuts />
+      <PreviewBroadcaster />
       <div className="flex flex-col h-screen overflow-hidden bg-[#141417]">
         <Topbar />
         <div className="flex flex-1 overflow-hidden">
