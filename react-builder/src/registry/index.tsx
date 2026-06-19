@@ -236,16 +236,37 @@ const zaloBtnDef: ComponentDefinition = {
     fullWidth: { label: "Full width", type: "boolean", defaultValue: false },
   },
   renderer: (props) => {
-    const variantClass: Record<string, string> = {
-      primary: "bg-[#0068FF] text-white",
-      secondary: "bg-white text-[#0068FF] border border-[#0068FF]",
-      tertiary: "bg-transparent text-[#0068FF] border border-[#0068FF]",
+    const base = `font-semibold transition-all active:scale-[0.97] ${props.fullWidth ? "w-full" : ""}`
+    const style: React.CSSProperties = {
+      borderRadius: tk.radius.md,
+      fontSize: 15,
+      letterSpacing: "-0.1px",
+      padding: "12px 20px",
+    }
+
+    if ((props.variant as string) === "primary") {
+      return (
+        <button
+          className={base}
+          style={{ ...style, background: tk.accentGrad, color: "white", boxShadow: tk.accentShadow }}
+        >
+          {props.label as string}
+        </button>
+      )
+    }
+    if ((props.variant as string) === "secondary") {
+      return (
+        <button
+          className={base}
+          style={{ ...style, background: tk.surface, color: tk.accent, border: "1.5px solid rgba(0,104,255,0.25)" }}
+        >
+          {props.label as string}
+        </button>
+      )
     }
     return (
-      <button
-        className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-opacity active:opacity-80 ${variantClass[props.variant as string] ?? variantClass.primary} ${props.fullWidth ? "w-full" : ""}`}
-      >
-        {props.label as string}
+      <button className={`${base} bg-transparent`} style={{ ...style, color: tk.accent }}>
+        <span className="underline underline-offset-2">{props.label as string}</span>
       </button>
     )
   },
@@ -273,15 +294,20 @@ const zaloInputDef: ComponentDefinition = {
   },
   renderer: (props) => (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700">
+      <label className="text-[13px] font-medium" style={{ color: tk.textSecondary }}>
         {props.label as string}
         {(props.required as boolean) && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2.5">
+      <div
+        className="flex items-center gap-2 bg-white"
+        style={{ border: tk.border, borderRadius: tk.radius.md, padding: "10px 14px" }}
+      >
+        <RiUserLine style={{ fontSize: 16, color: tk.textTertiary, flexShrink: 0 }} />
         <input
           type={props.type as string}
           placeholder={props.placeholder as string}
-          className="flex-1 text-sm bg-transparent outline-none text-gray-800 placeholder:text-gray-400"
+          className="flex-1 bg-transparent outline-none"
+          style={{ fontSize: 14, color: tk.textPrimary }}
         />
       </div>
     </div>
@@ -730,12 +756,20 @@ const zaloSearchBarDef: ComponentDefinition = {
     placeholder: { label: "Placeholder", type: "string", defaultValue: "Tìm kiếm..." },
   },
   renderer: (props) => (
-    <div className="flex items-center gap-2 rounded-xl bg-gray-100 px-3 py-2.5 mx-4">
-      <span className="text-gray-400 text-sm">🔍</span>
+    <div
+      className="flex items-center gap-2 mx-4"
+      style={{
+        background: "rgba(0,0,0,0.05)",
+        borderRadius: tk.radius.md,
+        padding: "10px 12px",
+      }}
+    >
+      <RiSearchLine style={{ fontSize: 15, color: tk.textTertiary, flexShrink: 0 }} />
       <input
         type="text"
         placeholder={props.placeholder as string}
-        className="flex-1 bg-transparent text-sm text-gray-600 placeholder:text-gray-400 outline-none"
+        className="flex-1 bg-transparent outline-none"
+        style={{ fontSize: 14, color: tk.textSecondary }}
       />
     </div>
   ),
