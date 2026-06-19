@@ -411,11 +411,15 @@ const zaloBottomNavDef: ComponentDefinition = {
     activeTab: { label: "Tab active", type: "select", defaultValue: "1", options: ["1", "2", "3"] },
   },
   renderer: (props) => {
+    const navigate = props.__navigate__ as ((path: string) => void) | undefined
+    const currentPath = props.__currentPath__ as string | undefined
+
     const tabs = [
-      { icon: props.tab1Icon as string, label: props.tab1Label as string, key: "1" },
-      { icon: props.tab2Icon as string, label: props.tab2Label as string, key: "2" },
-      { icon: props.tab3Icon as string, label: props.tab3Label as string, key: "3" },
+      { icon: props.tab1Icon as string, label: props.tab1Label as string, key: "1", route: (props.tab1Route as string) ?? "" },
+      { icon: props.tab2Icon as string, label: props.tab2Label as string, key: "2", route: (props.tab2Route as string) ?? "" },
+      { icon: props.tab3Icon as string, label: props.tab3Label as string, key: "3", route: (props.tab3Route as string) ?? "" },
     ]
+
     return (
       <div
         className="flex items-center justify-around px-2 shrink-0"
@@ -428,10 +432,23 @@ const zaloBottomNavDef: ComponentDefinition = {
         }}
       >
         {tabs.map((tab) => {
-          const isActive = props.activeTab === tab.key
+          // Preview mode: match by route; canvas mode: match by activeTab prop
+          const isActive = currentPath !== undefined
+            ? tab.route !== "" && tab.route === currentPath
+            : props.activeTab === tab.key
+
+          const handleClick = navigate && tab.route
+            ? () => navigate(tab.route)
+            : undefined
+
           const IconComp = emojiIconMap[tab.icon]
           return (
-            <div key={tab.key} className="flex flex-col items-center gap-0.5 flex-1 relative pt-1">
+            <div
+              key={tab.key}
+              onClick={handleClick}
+              className="flex flex-col items-center gap-0.5 flex-1 relative pt-1"
+              style={{ cursor: handleClick ? "pointer" : "default" }}
+            >
               {isActive && (
                 <div
                   className="absolute top-0 w-8 h-[3px] rounded-full"
@@ -1390,8 +1407,39 @@ const productCardDef: ComponentDefinition = {
       </div>
     </div>
   ),
-  toJSX: (props, _renderChildren, level) =>
-    `${ind(level)}<div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5">{/* ProductCard: ${props.name} */}</div>`,
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2), i3 = ind(level + 3), i4 = ind(level + 4)
+    const rating = Math.min(5, Math.max(0, props.rating as number))
+    const stars = Array.from({ length: 5 }).map((_, idx) => {
+      const filled = idx < rating
+      return `${i2}<svg viewBox="0 0 24 24" className="w-3 h-3" fill="${filled ? "#F59E0B" : "none"}" stroke="${filled ? "#F59E0B" : "#D1D5DB"}" strokeWidth={1.5}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>`
+    }).join("\n")
+    const badge = (props.badge as string)
+      ? `\n${i2}<span className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#0068FF" }}>${props.badge}</span>`
+      : ""
+    const origPrice = (props.originalPrice as string)
+      ? `\n${i4}<span className="text-[11px] line-through ml-1.5 text-gray-400">${props.originalPrice}</span>`
+      : ""
+    return [
+      `${i0}<div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5">`,
+      `${i1}<div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>`,
+      `${i2}<img src="${props.imageSrc}" alt="${props.name}" className="w-full h-full object-cover" />${badge}`,
+      `${i1}</div>`,
+      `${i1}<div className="p-3">`,
+      `${i2}<p className="text-[13px] font-semibold truncate mb-1.5 text-gray-900">${props.name}</p>`,
+      `${i2}<div className="flex items-center gap-0.5 mb-2">`,
+      stars,
+      `${i2}</div>`,
+      `${i2}<div className="flex items-end justify-between">`,
+      `${i3}<div>`,
+      `${i4}<span className="text-[15px] font-bold text-[#0068FF]">${props.price}</span>${origPrice}`,
+      `${i3}</div>`,
+      `${i3}<button className="text-white text-[12px] font-semibold px-3 py-1.5 rounded-lg" style={{ background: "#0068FF" }}>Thêm</button>`,
+      `${i2}</div>`,
+      `${i1}</div>`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
 }
 
 const heroSectionDef: ComponentDefinition = {
@@ -1450,8 +1498,21 @@ const heroSectionDef: ComponentDefinition = {
       </div>
     )
   },
-  toJSX: (props, _renderChildren, level) =>
-    `${ind(level)}<div className="relative w-full overflow-hidden rounded-2xl">{/* HeroSection: ${props.heading} */}</div>`,
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+    const opacity = Math.min(80, Math.max(0, props.overlayOpacity as number)) / 100
+    return [
+      `${i0}<div className="relative w-full overflow-hidden rounded-2xl" style={{ minHeight: 200 }}>`,
+      `${i1}<img src="${props.imageSrc}" alt="${props.heading}" className="absolute inset-0 w-full h-full object-cover" />`,
+      `${i1}<div className="absolute inset-0" style={{ background: "rgba(0,0,0,${opacity})" }} />`,
+      `${i1}<div className="relative z-10 flex flex-col justify-end p-5" style={{ minHeight: 200 }}>`,
+      `${i2}<h2 className="text-white font-bold leading-snug mb-1" style={{ fontSize: 20 }}>${props.heading}</h2>`,
+      `${i2}<p className="text-[13px] mb-4" style={{ color: "rgba(255,255,255,0.8)" }}>${props.subtext}</p>`,
+      `${i2}<button className="self-start text-[13px] font-semibold px-5 py-2.5 rounded-xl bg-white" style={{ color: "#0068FF" }}>${props.ctaLabel}</button>`,
+      `${i1}</div>`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
 }
 
 const statIconMap: Record<string, React.ElementType> = {
@@ -1517,8 +1578,24 @@ const statCardDef: ComponentDefinition = {
       </div>
     )
   },
-  toJSX: (props, _renderChildren, level) =>
-    `${ind(level)}<div className="bg-white rounded-xl p-4 shadow-sm border border-black/5">{/* StatCard: ${props.label} */}</div>`,
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+    const iconMap: Record<string, string> = { user: "👤", cart: "🛒", money: "💰", chart: "📊", heart: "❤️", star: "⭐" }
+    const iconEmoji = iconMap[props.icon as string] ?? "📊"
+    const lightBg = `${props.color as string}18`
+    const trendSpan = (props.trend as string)
+      ? `\n${i2}<span className="text-[11px] font-semibold rounded-md px-1.5 py-0.5 bg-green-50 text-green-700">${props.trend}</span>`
+      : ""
+    return [
+      `${i0}<div className="bg-white rounded-xl p-4 shadow-sm border border-black/5">`,
+      `${i1}<div className="flex items-start justify-between mb-3">`,
+      `${i2}<div className="w-10 h-10 flex items-center justify-center rounded-xl text-xl" style={{ background: "${lightBg}" }}>${iconEmoji}</div>${trendSpan}`,
+      `${i1}</div>`,
+      `${i1}<p className="text-[22px] font-bold mb-0.5 text-gray-900">${props.value}</p>`,
+      `${i1}<p className="text-[12px] text-gray-500">${props.label}</p>`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
 }
 
 const userProfileCardDef: ComponentDefinition = {
@@ -1614,8 +1691,39 @@ const userProfileCardDef: ComponentDefinition = {
       </div>
     )
   },
-  toJSX: (props, _renderChildren, level) =>
-    `${ind(level)}<div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5">{/* UserProfileCard: ${props.name} */}</div>`,
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2), i3 = ind(level + 3), i4 = ind(level + 4)
+    const initials = (props.name as string).split(" ").map((n: string) => n[0]).slice(-2).join("").toUpperCase()
+    const avatarInner = (props.avatarSrc as string)
+      ? `${i3}<img src="${props.avatarSrc}" alt="${props.name}" className="w-full h-full object-cover" />`
+      : `${i3}${initials}`
+    const stats = [
+      { label: props.stat1Label as string, value: props.stat1Value as string },
+      { label: props.stat2Label as string, value: props.stat2Value as string },
+      { label: props.stat3Label as string, value: props.stat3Value as string },
+    ]
+    const statDivs = stats.map((stat, idx) => [
+      `${i3}<div className="flex-1 flex flex-col items-center"${idx > 0 ? ' style={{ borderLeft: "1px solid rgba(0,0,0,0.05)" }}' : ""}>`,
+      `${i4}<span className="font-bold text-gray-900" style={{ fontSize: 16 }}>${stat.value}</span>`,
+      `${i4}<span className="text-[11px] text-gray-500">${stat.label}</span>`,
+      `${i3}</div>`,
+    ].join("\n")).join("\n")
+    return [
+      `${i0}<div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5">`,
+      `${i1}<div className="h-[72px]" style={{ background: "linear-gradient(135deg, #0068FF 0%, #0084FF 100%)" }} />`,
+      `${i1}<div className="flex flex-col items-center -mt-9 pb-4 px-4">`,
+      `${i2}<div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-xl" style={{ background: "linear-gradient(135deg, #0068FF, #7C3AED)", boxShadow: "0 0 0 3px white, 0 0 0 5px rgba(0,104,255,0.2)" }}>`,
+      avatarInner,
+      `${i2}</div>`,
+      `${i2}<h3 className="mt-2 font-bold text-gray-900" style={{ fontSize: 16 }}>${props.name}</h3>`,
+      `${i2}<p className="text-[12px] mt-0.5 text-center text-gray-500">${props.bio}</p>`,
+      `${i2}<div className="flex w-full mt-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.05)" }}>`,
+      statDivs,
+      `${i2}</div>`,
+      `${i1}</div>`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
 }
 
 const notifIconMap: Record<string, React.ElementType> = {
@@ -1693,8 +1801,26 @@ const notificationItemDef: ComponentDefinition = {
       </div>
     )
   },
-  toJSX: (props, _renderChildren, level) =>
-    `${ind(level)}<div className="flex items-start gap-3 px-4 py-3">{/* NotificationItem: ${props.title} */}</div>`,
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+    const iconMap: Record<string, string> = { check: "✅", info: "ℹ️", user: "👤", cart: "🛒", star: "⭐", heart: "❤️" }
+    const iconEmoji = iconMap[props.icon as string] ?? "ℹ️"
+    const lightBg = `${props.iconColor as string}18`
+    const titleWeight = (props.unread as boolean) ? "font-semibold" : "font-medium"
+    const unreadDot = (props.unread as boolean)
+      ? `\n${i1}<div className="w-2 h-2 rounded-full shrink-0 mt-1.5 bg-[#0068FF]" />`
+      : ""
+    return [
+      `${i0}<div className="flex items-start gap-3 px-4 py-3 bg-white border-b border-black/5">`,
+      `${i1}<div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5 text-lg" style={{ background: "${lightBg}" }}>${iconEmoji}</div>`,
+      `${i1}<div className="flex-1 min-w-0">`,
+      `${i2}<p className="text-[13px] truncate ${titleWeight} text-gray-900">${props.title}</p>`,
+      `${i2}<p className="text-[12px] mt-0.5 truncate text-gray-500">${props.body}</p>`,
+      `${i2}<p className="text-[11px] mt-0.5 text-gray-400">${props.time}</p>`,
+      `${i1}</div>${unreadDot}`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
 }
 
 // ─── Registry exports ─────────────────────────────────────────────────────────
