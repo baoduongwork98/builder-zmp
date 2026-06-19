@@ -157,22 +157,15 @@ export function Topbar() {
     }
   }, [])
 
-  const PREVIEW_W = 430
-  const PREVIEW_H = 932
-
   const handlePreview = () => {
-    const { localUrl } = appConfig
-    if (localUrl) {
-      const left = Math.round(window.screenX + (window.outerWidth - PREVIEW_W) / 2)
-      const top = Math.round(window.screenY + (window.outerHeight - PREVIEW_H) / 2)
-      window.open(
-        localUrl,
-        "zmp-preview",
-        `width=${PREVIEW_W},height=${PREVIEW_H},left=${left},top=${top},resizable=yes,scrollbars=yes`
-      )
-    } else {
-      setShowQR(true)
-    }
+    const w = 430, h = 932
+    const left = Math.round(window.screenX + (window.outerWidth - w) / 2)
+    const top = Math.round(window.screenY + (window.outerHeight - h) / 2)
+    window.open(
+      "/preview",
+      "zmp-preview",
+      `width=${w},height=${h},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    )
   }
 
   const [editingPageId, setEditingPageId] = useState<string | null>(null)
