@@ -860,7 +860,7 @@ const zaloPageDef: ComponentDefinition = {
     const paddingClass: Record<string, string> = { none: "p-0", sm: "p-3", md: "p-4", lg: "p-6" }
     return (
       <div
-        className={`flex flex-col min-h-full w-full ${paddingClass[props.padding as string] ?? "p-0"}`}
+        className={`flex flex-col h-full w-full ${paddingClass[props.padding as string] ?? "p-0"}`}
         style={{ backgroundColor: props.bgColor as string }}
       >
         {children ?? (

@@ -138,6 +138,7 @@ export function CanvasNode({ id, nodes, depth = 0, isDraggingAny }: CanvasNodePr
       className={cn(
         "relative group",
         isDragging ? "opacity-30 cursor-grabbing" : "cursor-grab",
+        node.type === "ZaloPage" && "flex-1 flex flex-col",
         def.acceptsChildren && isDraggingAny && node.children.length === 0 && "min-h-16",
         isSelected && "outline outline-2 outline-[#0068FF] outline-offset-1 rounded-sm",
         !isSelected && "hover:outline hover:outline-1 hover:outline-[#0068FF]/40 hover:outline-offset-1 hover:rounded-sm",

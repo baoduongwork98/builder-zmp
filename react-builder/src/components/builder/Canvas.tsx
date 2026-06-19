@@ -48,7 +48,7 @@ function RootDropZone({ rootIds, nodes, isDraggingAny }: RootDropZoneProps) {
     <div
       ref={setNodeRef}
       className={cn(
-        "min-h-full bg-white relative flex flex-col",
+        "h-full min-h-full bg-white relative flex flex-col",
         isOver && "ring-2 ring-[#0068FF]/40 ring-inset"
       )}
     >
