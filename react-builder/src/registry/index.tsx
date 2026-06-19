@@ -87,7 +87,7 @@ const textDef: ComponentDefinition = {
     return (
       <Tag
         className={`text-${props.size as string} font-${props.weight as string} text-${props.align as string}`}
-        style={{ color: props.color as string }}
+        style={{ color: props.color as string, lineHeight: 1.6 }}
       >
         {props.content as string}
       </Tag>
@@ -117,13 +117,24 @@ const imageDef: ComponentDefinition = {
     height: { label: "Height", type: "string", defaultValue: "180px" },
   },
   renderer: (props) => (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={props.src as string}
-      alt={props.alt as string}
-      className={`rounded-${props.rounded as string} object-${props.objectFit as string}`}
-      style={{ width: props.width as string, height: props.height as string }}
-    />
+    <div
+      style={{
+        width: props.width as string,
+        height: props.height as string,
+        borderRadius: ({
+          none: 0, sm: 4, md: 8, lg: 12, xl: 16, full: 9999,
+        } as Record<string, number>)[props.rounded as string] ?? 8,
+        overflow: "hidden",
+        flexShrink: 0,
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={props.src as string}
+        alt={props.alt as string}
+        className={`w-full h-full object-${props.objectFit as string}`}
+      />
+    </div>
   ),
   toJSX: (props, _renderChildren, level) =>
     `${ind(level)}<img src="${props.src}" alt="${props.alt}" className="rounded-${props.rounded} object-${props.objectFit}" style={{ width: "${props.width}", height: "${props.height}" }} />`,
@@ -963,17 +974,28 @@ const bannerDef: ComponentDefinition = {
     showIcon: { label: "Hiện icon", type: "boolean", defaultValue: true },
   },
   renderer: (props) => {
-    const styles: Record<string, { bg: string; border: string; text: string; icon: string }> = {
-      info:    { bg: "bg-blue-50",   border: "border-blue-200",   text: "text-blue-800",   icon: "ℹ️" },
-      success: { bg: "bg-green-50",  border: "border-green-200",  text: "text-green-800",  icon: "✅" },
-      warning: { bg: "bg-yellow-50", border: "border-yellow-200", text: "text-yellow-800", icon: "⚠️" },
-      error:   { bg: "bg-red-50",    border: "border-red-200",    text: "text-red-800",    icon: "❌" },
+    const variants: Record<string, { bg: string; border: string; iconColor: string; Icon: React.ElementType }> = {
+      info:    { bg: "rgba(0,104,255,0.06)",    border: "rgba(0,104,255,0.15)",    iconColor: "#0068FF", Icon: RiInformationLine },
+      success: { bg: "rgba(16,185,129,0.06)",   border: "rgba(16,185,129,0.15)",   iconColor: "#059669", Icon: RiCheckboxCircleLine },
+      warning: { bg: "rgba(245,158,11,0.07)",   border: "rgba(245,158,11,0.2)",    iconColor: "#B45309", Icon: RiAlertLine },
+      error:   { bg: "rgba(239,68,68,0.06)",    border: "rgba(239,68,68,0.15)",    iconColor: "#DC2626", Icon: RiCloseCircleLine },
     }
-    const s = styles[props.type as string] ?? styles.info
+    const v = variants[props.type as string] ?? variants.info
     return (
-      <div className={`flex items-start gap-2.5 rounded-xl px-4 py-3 border ${s.bg} ${s.border}`}>
-        {(props.showIcon as boolean) && <span className="text-base leading-snug shrink-0">{s.icon}</span>}
-        <p className={`text-sm ${s.text}`}>{props.message as string}</p>
+      <div
+        className="flex items-start gap-3 px-4 py-3"
+        style={{
+          background: v.bg,
+          border: `1px solid ${v.border}`,
+          borderRadius: tk.radius.lg,
+        }}
+      >
+        {(props.showIcon as boolean) && (
+          <v.Icon style={{ fontSize: 18, color: v.iconColor, flexShrink: 0, marginTop: 1 }} />
+        )}
+        <p className="text-[13px] leading-snug" style={{ color: tk.textPrimary }}>
+          {props.message as string}
+        </p>
       </div>
     )
   },
@@ -1015,15 +1037,35 @@ const progressBarDef: ComponentDefinition = {
   renderer: (props) => {
     const pct = Math.min(100, Math.max(0, props.value as number))
     return (
-      <div className="flex flex-col gap-1.5 w-full">
+      <div className="flex flex-col gap-2 w-full">
         {(props.showLabel as boolean) && (
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-700">{props.label as string}</span>
-            <span className="text-xs text-gray-500">{pct}%</span>
+            <span className="text-[13px] font-medium" style={{ color: tk.textSecondary }}>
+              {props.label as string}
+            </span>
+            <span
+              className="font-mono text-[11px] font-semibold rounded-md px-1.5 py-0.5"
+              style={{ background: "rgba(0,0,0,0.06)", color: tk.textSecondary }}
+            >
+              {pct}%
+            </span>
           </div>
         )}
-        <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: props.bgColor as string }}>
-          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: props.color as string }} />
+        <div
+          className="w-full overflow-hidden"
+          style={{ height: 6, borderRadius: 9999, backgroundColor: props.bgColor as string }}
+        >
+          <div
+            className="h-full"
+            style={{
+              width: `${pct}%`,
+              borderRadius: 9999,
+              background:
+                (props.color as string) === "#0068FF"
+                  ? "linear-gradient(90deg, #0068FF 0%, #60A5FA 100%)"
+                  : (props.color as string),
+            }}
+          />
         </div>
       </div>
     )
@@ -1055,15 +1097,39 @@ const switchDef: ComponentDefinition = {
   renderer: (props) => (
     <div className="flex items-center justify-between gap-3 py-2">
       <div className="flex flex-col min-w-0">
-        <span className="text-sm font-medium text-gray-900">{props.label as string}</span>
+        <span className="text-[14px] font-semibold" style={{ color: tk.textPrimary }}>
+          {props.label as string}
+        </span>
         {(props.description as string) && (
-          <span className="text-xs text-gray-500 mt-0.5">{props.description as string}</span>
+          <span className="text-[12px] mt-0.5" style={{ color: tk.textSecondary }}>
+            {props.description as string}
+          </span>
         )}
       </div>
       <div
-        className={`relative w-11 h-6 rounded-full shrink-0 transition-colors ${(props.checked as boolean) ? "bg-[#0068FF]" : "bg-gray-300"}`}
+        className="relative shrink-0"
+        style={{
+          width: 44,
+          height: 24,
+          borderRadius: 9999,
+          backgroundColor: (props.checked as boolean) ? tk.accent : "#D1D5DB",
+          boxShadow: (props.checked as boolean) ? "0 0 0 3px rgba(0,104,255,0.12)" : "none",
+          transition: "background-color 200ms",
+        }}
       >
-        <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${(props.checked as boolean) ? "translate-x-5" : "translate-x-0.5"}`} />
+        <div
+          style={{
+            position: "absolute",
+            top: 2,
+            left: (props.checked as boolean) ? 20 : 2,
+            width: 20,
+            height: 20,
+            borderRadius: 9999,
+            background: "white",
+            boxShadow: "0 1px 4px rgba(0,0,0,0.2), 0 2px 8px rgba(0,0,0,0.12)",
+            transition: "left 200ms",
+          }}
+        />
       </div>
     </div>
   ),
@@ -1108,15 +1174,29 @@ const ratingDef: ComponentDefinition = {
     return (
       <div className="flex items-center gap-1">
         {Array.from({ length: max }).map((_, i) => (
-          <svg key={i} viewBox="0 0 24 24" className="w-5 h-5"
+          <svg
+            key={i}
+            viewBox="0 0 24 24"
+            className="w-5 h-5"
             fill={i < val ? (props.color as string) : "none"}
-            stroke={i < val ? (props.color as string) : "#d1d5db"}
-            strokeWidth={1.5}>
+            stroke={i < val ? (props.color as string) : "#D1D5DB"}
+            strokeWidth={1.5}
+            style={
+              i < val
+                ? { filter: `drop-shadow(0 1px 2px rgba(245,158,11,0.35))` }
+                : undefined
+            }
+          >
             <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
           </svg>
         ))}
         {(props.showValue as boolean) && (
-          <span className="text-sm font-semibold text-gray-700 ml-1">{val}/{max}</span>
+          <span
+            className="text-[11px] font-semibold rounded-md px-1.5 py-0.5 ml-1"
+            style={{ background: "rgba(245,158,11,0.1)", color: "#B45309" }}
+          >
+            {val}/{max}
+          </span>
         )}
       </div>
     )
@@ -1151,15 +1231,30 @@ const textareaDef: ComponentDefinition = {
   },
   renderer: (props) => (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-gray-700">
+      <label className="text-[13px] font-medium" style={{ color: tk.textSecondary }}>
         {props.label as string}
         {(props.required as boolean) && <span className="text-red-500 ml-0.5">*</span>}
       </label>
-      <textarea
-        rows={props.rows as number}
-        placeholder={props.placeholder as string}
-        className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 outline-none resize-none bg-white"
-      />
+      <div className="relative">
+        <textarea
+          rows={props.rows as number}
+          placeholder={props.placeholder as string}
+          className="w-full bg-white outline-none resize-none"
+          style={{
+            border: tk.border,
+            borderRadius: tk.radius.md,
+            padding: "11px 14px",
+            fontSize: 14,
+            color: tk.textPrimary,
+          }}
+        />
+        <span
+          className="absolute bottom-2 right-3 text-[11px]"
+          style={{ color: tk.textTertiary }}
+        >
+          0/∞
+        </span>
+      </div>
     </div>
   ),
   toJSX: (props, _renderChildren, level) => {
@@ -1184,8 +1279,22 @@ const chipDef: ComponentDefinition = {
   },
   renderer: (props) => (
     <button
-      className={`inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium border transition-all ${(props.active as boolean) ? "text-white border-transparent" : "bg-white text-gray-600 border-gray-200"}`}
-      style={(props.active as boolean) ? { backgroundColor: props.color as string, borderColor: props.color as string } : undefined}
+      className="inline-flex items-center font-medium transition-all"
+      style={{
+        borderRadius: 9999,
+        padding: "6px 16px",
+        fontSize: 13,
+        ...(props.active as boolean)
+          ? {
+              background: tk.accentGrad,
+              color: "white",
+              boxShadow: tk.accentShadow,
+            }
+          : {
+              background: "rgba(0,0,0,0.05)",
+              color: tk.textSecondary,
+            }
+      }}
     >
       {props.label as string}
     </button>
