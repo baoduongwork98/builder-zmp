@@ -1097,11 +1097,7 @@ export function TemplateModal({ onClose }: TemplateModalProps) {
   ]
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)", animation: "tmModalIn 180ms ease-out" }}
-      onClick={onClose}
-    >
+    <>
       <style>{`
         @keyframes tmModalIn {
           from { opacity: 0; transform: scale(0.95); }
@@ -1114,10 +1110,14 @@ export function TemplateModal({ onClose }: TemplateModalProps) {
         .tm-scrollbar-hide::-webkit-scrollbar { display: none; }
         .tm-scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center"
+        style={{ backgroundColor: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)" }}
+        onClick={onClose}
+      >
       <div
         className="bg-white rounded-2xl shadow-2xl flex overflow-hidden"
-        style={{ width: 880, maxHeight: "88vh" }}
+        style={{ width: 880, maxHeight: "88vh", animation: "tmModalIn 180ms ease-out" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Left panel ──────────────────────────────────────────────────── */}
@@ -1184,59 +1184,57 @@ export function TemplateModal({ onClose }: TemplateModalProps) {
                 <p className="text-[12px]">Không tìm thấy template</p>
               </div>
             ) : (
-              <>
-                {filtered.map((t) => (
-                  <button
-                    key={t.id}
-                    onClick={() => setSelectedId(t.id)}
-                    onMouseEnter={() => setHoveredId(t.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 ${
-                      selectedId === t.id
-                        ? "bg-blue-50 border-r-2 border-[#0068FF]"
-                        : "hover:bg-zinc-50 border-r-2 border-transparent"
-                    }`}
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 transition-colors ${
-                      selectedId === t.id ? "bg-blue-100" : "bg-zinc-100"
-                    }`}>
-                      {t.emoji}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className={`text-[12px] font-semibold truncate mb-0.5 ${
-                        selectedId === t.id ? "text-[#0068FF]" : "text-zinc-700"
-                      }`}>
-                        {t.name}
-                      </div>
-                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${CATEGORY_COLORS[t.category]}`}>
-                        {CATEGORY_LABELS[t.category]}
-                      </span>
-                    </div>
-                  </button>
-                ))}
-
-                {/* Blank canvas option */}
+              filtered.map((t) => (
                 <button
-                  onClick={onClose}
-                  onMouseEnter={() => setHoveredId("blank")}
+                  key={t.id}
+                  onClick={() => setSelectedId(t.id)}
+                  onMouseEnter={() => setHoveredId(t.id)}
                   onMouseLeave={() => setHoveredId(null)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 hover:bg-zinc-50 border-r-2 border-transparent"
+                  className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 ${
+                    selectedId === t.id
+                      ? "bg-blue-50 border-r-2 border-[#0068FF]"
+                      : "hover:bg-zinc-50 border-r-2 border-transparent"
+                  }`}
                 >
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-zinc-100 shrink-0">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-zinc-400">
-                      <rect x="3" y="3" width="18" height="18" rx="2" />
-                      <line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
-                    </svg>
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 transition-colors ${
+                    selectedId === t.id ? "bg-blue-100" : "bg-zinc-100"
+                  }`}>
+                    {t.emoji}
                   </div>
-                  <div>
-                    <div className="text-[12px] font-semibold text-zinc-500 mb-0.5">Canvas trắng</div>
-                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded border text-zinc-400 bg-zinc-50 border-zinc-200">
-                      Custom
+                  <div className="flex-1 min-w-0">
+                    <div className={`text-[12px] font-semibold truncate mb-0.5 ${
+                      selectedId === t.id ? "text-[#0068FF]" : "text-zinc-700"
+                    }`}>
+                      {t.name}
+                    </div>
+                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${CATEGORY_COLORS[t.category]}`}>
+                      {CATEGORY_LABELS[t.category]}
                     </span>
                   </div>
                 </button>
-              </>
+              ))
             )}
+
+            {/* Blank canvas option — always visible */}
+            <button
+              onClick={onClose}
+              onMouseEnter={() => setHoveredId("blank")}
+              onMouseLeave={() => setHoveredId(null)}
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 hover:bg-zinc-50 border-r-2 border-transparent"
+            >
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-zinc-100 shrink-0">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-zinc-400">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+                </svg>
+              </div>
+              <div>
+                <div className="text-[12px] font-semibold text-zinc-500 mb-0.5">Canvas trắng</div>
+                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded border text-zinc-400 bg-zinc-50 border-zinc-200">
+                  Custom
+                </span>
+              </div>
+            </button>
           </div>
         </div>
 
@@ -1315,5 +1313,6 @@ export function TemplateModal({ onClose }: TemplateModalProps) {
         </div>
       </div>
     </div>
+    </>
   )
 }
