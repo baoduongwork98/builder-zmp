@@ -1306,6 +1306,154 @@ const chipDef: ComponentDefinition = {
   },
 }
 
+const productCardDef: ComponentDefinition = {
+  type: "ProductCard",
+  label: "Product Card",
+  icon: RiShoppingBag3Line,
+  description: "Card sản phẩm với hình ảnh, giá và nút thêm vào giỏ",
+  category: "zalo",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: {
+    imageSrc: "https://placehold.co/400x300",
+    name: "Tên sản phẩm",
+    price: "120.000đ",
+    originalPrice: "150.000đ",
+    rating: 4,
+    badge: "Mới",
+  },
+  propSchema: {
+    imageSrc: { label: "URL ảnh", type: "string", defaultValue: "https://placehold.co/400x300" },
+    name: { label: "Tên sản phẩm", type: "string", defaultValue: "Tên sản phẩm" },
+    price: { label: "Giá", type: "string", defaultValue: "120.000đ" },
+    originalPrice: { label: "Giá gốc (để trống = ẩn)", type: "string", defaultValue: "150.000đ" },
+    rating: { label: "Đánh giá (1–5)", type: "number", defaultValue: 4 },
+    badge: { label: "Badge (để trống = ẩn)", type: "string", defaultValue: "Mới" },
+  },
+  renderer: (props) => (
+    <div
+      className="bg-white overflow-hidden"
+      style={{ borderRadius: tk.radius.lg, border: tk.border, boxShadow: tk.shadow.sm }}
+    >
+      <div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={props.imageSrc as string}
+          alt={props.name as string}
+          className="w-full h-full object-cover"
+        />
+        {(props.badge as string) && (
+          <span
+            className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-full"
+            style={{ background: tk.accentGrad }}
+          >
+            {props.badge as string}
+          </span>
+        )}
+      </div>
+      <div className="p-3">
+        <p className="text-[13px] font-semibold truncate mb-1.5" style={{ color: tk.textPrimary }}>
+          {props.name as string}
+        </p>
+        <div className="flex items-center gap-0.5 mb-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <svg
+              key={i}
+              viewBox="0 0 24 24"
+              className="w-3 h-3"
+              fill={i < (props.rating as number) ? "#F59E0B" : "none"}
+              stroke={i < (props.rating as number) ? "#F59E0B" : "#D1D5DB"}
+              strokeWidth={1.5}
+            >
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+            </svg>
+          ))}
+        </div>
+        <div className="flex items-end justify-between">
+          <div>
+            <span className="text-[15px] font-bold" style={{ color: tk.accent }}>
+              {props.price as string}
+            </span>
+            {(props.originalPrice as string) && (
+              <span className="text-[11px] line-through ml-1.5" style={{ color: tk.textTertiary }}>
+                {props.originalPrice as string}
+              </span>
+            )}
+          </div>
+          <button
+            className="text-white text-[12px] font-semibold px-3 py-1.5 rounded-lg"
+            style={{ background: tk.accentGrad }}
+          >
+            Thêm
+          </button>
+        </div>
+      </div>
+    </div>
+  ),
+  toJSX: (props, _renderChildren, level) =>
+    `${ind(level)}<div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5">{/* ProductCard: ${props.name} */}</div>`,
+}
+
+const heroSectionDef: ComponentDefinition = {
+  type: "HeroSection",
+  label: "Hero Section",
+  icon: RiImageLine,
+  description: "Banner lớn với hình nền, tiêu đề overlay và nút CTA",
+  category: "ui",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: {
+    imageSrc: "https://placehold.co/800x400",
+    heading: "Khám phá ngay hôm nay",
+    subtext: "Ưu đãi đặc biệt chỉ trong hôm nay",
+    ctaLabel: "Khám phá",
+    overlayOpacity: 45,
+  },
+  propSchema: {
+    imageSrc: { label: "URL ảnh nền", type: "string", defaultValue: "https://placehold.co/800x400" },
+    heading: { label: "Tiêu đề", type: "string", defaultValue: "Khám phá ngay hôm nay" },
+    subtext: { label: "Mô tả phụ", type: "string", defaultValue: "Ưu đãi đặc biệt chỉ trong hôm nay" },
+    ctaLabel: { label: "Nút CTA", type: "string", defaultValue: "Khám phá" },
+    overlayOpacity: { label: "Độ tối overlay (0–80)", type: "number", defaultValue: 45 },
+  },
+  renderer: (props) => {
+    const opacity = Math.min(80, Math.max(0, props.overlayOpacity as number)) / 100
+    return (
+      <div
+        className="relative w-full overflow-hidden"
+        style={{ minHeight: 200, borderRadius: tk.radius.lg }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={props.imageSrc as string}
+          alt={props.heading as string}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0" style={{ background: `rgba(0,0,0,${opacity})` }} />
+        <div className="relative z-10 flex flex-col justify-end p-5" style={{ minHeight: 200 }}>
+          <h2
+            className="text-white font-bold leading-snug mb-1"
+            style={{ fontSize: 20 }}
+          >
+            {props.heading as string}
+          </h2>
+          <p className="text-[13px] mb-4" style={{ color: "rgba(255,255,255,0.8)" }}>
+            {props.subtext as string}
+          </p>
+          <button
+            className="self-start text-[13px] font-semibold px-5 py-2.5 rounded-xl"
+            style={{ background: "white", color: tk.accent }}
+          >
+            {props.ctaLabel as string}
+          </button>
+        </div>
+      </div>
+    )
+  },
+  toJSX: (props, _renderChildren, level) =>
+    `${ind(level)}<div className="relative w-full overflow-hidden rounded-2xl">{/* HeroSection: ${props.heading} */}</div>`,
+}
+
 // ─── Registry exports ─────────────────────────────────────────────────────────
 
 export const registry: Record<string, ComponentDefinition> = {
@@ -1322,6 +1470,7 @@ export const registry: Record<string, ComponentDefinition> = {
   ZaloInput: zaloInputDef,
   ZaloSearchBar: zaloSearchBarDef,
   ZaloSection: zaloSectionDef,
+  ProductCard: productCardDef,
   // Layout
   Stack: stackDef,
   Grid: gridDef,
@@ -1336,6 +1485,7 @@ export const registry: Record<string, ComponentDefinition> = {
   Rating: ratingDef,
   Textarea: textareaDef,
   Chip: chipDef,
+  HeroSection: heroSectionDef,
 }
 
 export const categoryOrder = ["zalo", "layout", "ui"] as const
