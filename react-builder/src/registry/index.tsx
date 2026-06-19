@@ -759,10 +759,24 @@ const zaloSectionDef: ComponentDefinition = {
   },
   renderer: (props, children) => (
     <div className="flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className="text-sm font-semibold text-gray-900">{props.title as string}</span>
+      <div
+        className="flex items-center justify-between px-4 py-3"
+        style={{ borderBottom: props.subtitle ? "1px solid rgba(0,0,0,0.05)" : "none" }}
+      >
+        <span
+          className="font-semibold"
+          style={{ fontSize: 15, letterSpacing: "-0.2px", color: tk.textPrimary }}
+        >
+          {props.title as string}
+        </span>
         {(props.subtitle as string) && (
-          <span className="text-xs text-[#0068FF]">{props.subtitle as string}</span>
+          <span
+            className="flex items-center gap-0.5 text-[13px] font-medium"
+            style={{ color: tk.accent }}
+          >
+            {props.subtitle as string}
+            <RiArrowRightSLine style={{ fontSize: 16 }} />
+          </span>
         )}
       </div>
       <div>{children}</div>
