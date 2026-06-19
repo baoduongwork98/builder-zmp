@@ -42,10 +42,10 @@ function buildHomeTemplate(): BuildResult {
 
   const hero = mk("HeroSection", {
     imageSrc: "https://picsum.photos/seed/zmp-hero/800/400",
-    heading: "Sale Hè 2024 🔥",
-    subtext: "Giảm đến 50% toàn bộ sản phẩm — Chỉ hôm nay",
-    ctaLabel: "Mua ngay",
-    overlayOpacity: 50,
+    heading: "Siêu Sale Cuối Tuần 🔥",
+    subtext: "Giảm đến 60% — Freeship toàn quốc cho đơn từ 99K",
+    ctaLabel: "Khám phá ngay",
+    overlayOpacity: 55,
   })
 
   const chipRow = mk("Stack", { direction: "horizontal", gap: "2", padding: "4", background: "transparent", align: "start" })
@@ -172,7 +172,7 @@ function buildDetailTemplate(): BuildResult {
   nest(tagRow, tag1, tag2)
 
   const titleText = mk("Text", {
-    content: "Áo thun Oversized Premium Cotton",
+    content: "Áo thun Unisex Premium Cotton 230gsm",
     tag: "h2",
     size: "xl",
     weight: "bold",
@@ -180,12 +180,12 @@ function buildDetailTemplate(): BuildResult {
     align: "left",
   })
 
-  const ratingRow = mk("Stack", { direction: "horizontal", gap: "3", padding: "0", align: "center", background: "transparent" })
+  const ratingRow = mk("Stack", { direction: "horizontal", gap: "3", padding: "4", align: "center", background: "transparent" })
   const rating = mk("Rating", { value: 4, max: "5", color: "#F59E0B", showValue: true }, ratingRow.id)
   const reviewCount = mk("Text", { content: "128 đánh giá", tag: "span", size: "sm", weight: "normal", color: "#6B7280", align: "left" }, ratingRow.id)
   nest(ratingRow, rating, reviewCount)
 
-  const priceRow = mk("Stack", { direction: "horizontal", gap: "3", padding: "0", align: "center", background: "transparent" })
+  const priceRow = mk("Stack", { direction: "horizontal", gap: "3", padding: "4", align: "center", background: "transparent" })
   const price = mk("Text", { content: "129.000đ", tag: "span", size: "2xl", weight: "bold", color: "#0068FF", align: "left" }, priceRow.id)
   const origPrice = mk("Text", { content: "199.000đ", tag: "span", size: "base", weight: "normal", color: "#9CA3AF", align: "left" }, priceRow.id)
   nest(priceRow, price, origPrice)
@@ -433,11 +433,11 @@ function buildDashboardTemplate(): BuildResult {
   const header = mk("ZaloHeader", { title: "Dashboard", showBack: false, bgColor: "#0068FF" })
 
   const greeting = mk("Text", {
-    content: "Xin chào, Nguyễn Văn A 👋",
+    content: "Chào buổi sáng, Admin 👋",
     tag: "h2", size: "lg", weight: "bold", color: "#111827", align: "left",
   })
   const subGreeting = mk("Text", {
-    content: "Đây là tổng quan hoạt động hôm nay",
+    content: "Thứ Năm, 19/06/2026 · Cửa hàng đang hoạt động tốt",
     tag: "p", size: "sm", weight: "normal", color: "#6B7280", align: "left",
   })
 
