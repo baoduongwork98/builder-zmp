@@ -8,7 +8,8 @@ import { PhoneMockup } from "./PhoneMockup"
 import { useIsDraggingAny } from "./BuilderDnd"
 import { TemplateModal } from "./TemplateModal"
 import { cn } from "@/lib/utils"
-import { ComponentNode, PageSchema } from "@/types/builder"
+import { ComponentNode } from "@/types/builder"
+import { findGlobalBottomNav } from "@/lib/previewUtils"
 
 const VIEWPORT_WIDTH: Record<string, string> = {
   desktop: "100%",
@@ -18,17 +19,6 @@ const VIEWPORT_WIDTH: Record<string, string> = {
 
 // Component types that render at layout level, not inline with page content
 const LAYOUT_NODE_TYPES = new Set(["ZaloBottomNav"])
-
-function findGlobalBottomNav(
-  pages: PageSchema[]
-): { node: ComponentNode; nodes: Record<string, ComponentNode> } | null {
-  for (const page of pages) {
-    for (const node of Object.values(page.nodes)) {
-      if (node.type === "ZaloBottomNav") return { node, nodes: page.nodes }
-    }
-  }
-  return null
-}
 
 interface RootDropZoneProps {
   rootIds: string[]
