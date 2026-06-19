@@ -107,16 +107,23 @@ export function CanvasNode({ id, nodes, depth = 0, isDraggingAny }: CanvasNodePr
   if (!node || !def) return null
 
   const isHorizontalStack = node.type === "Stack" && node.props.direction === "horizontal"
+  const isGrid = node.type === "Grid"
   const dzDirection = isHorizontalStack ? "horizontal" : "vertical"
 
   const children =
     def.acceptsChildren && node.children.length > 0
-      ? node.children.flatMap((childId, i) => [
-          <DropZone key={`dz-${i}`} parentId={id} index={i} isVisible={isDraggingAny} direction={dzDirection} />,
-          <CanvasNode key={childId} id={childId} nodes={nodes} depth={depth + 1} isDraggingAny={isDraggingAny} />,
-        ]).concat(
-          <DropZone key="dz-last" parentId={id} index={node.children.length} isVisible={isDraggingAny} direction={dzDirection} />
-        )
+      ? isGrid
+        // Grid: no inter-item DropZones — they would occupy grid cells and break the column layout.
+        // Drop-to-append still works via the container-level useDroppable above.
+        ? node.children.map((childId) => (
+            <CanvasNode key={childId} id={childId} nodes={nodes} depth={depth + 1} isDraggingAny={isDraggingAny} />
+          ))
+        : node.children.flatMap((childId, i) => [
+            <DropZone key={`dz-${i}`} parentId={id} index={i} isVisible={isDraggingAny} direction={dzDirection} />,
+            <CanvasNode key={childId} id={childId} nodes={nodes} depth={depth + 1} isDraggingAny={isDraggingAny} />,
+          ]).concat(
+            <DropZone key="dz-last" parentId={id} index={node.children.length} isVisible={isDraggingAny} direction={dzDirection} />
+          )
       : def.acceptsChildren
         ? [<DropZone key="dz-empty" parentId={id} index={0} isVisible={true} direction={dzDirection} />]
         : undefined

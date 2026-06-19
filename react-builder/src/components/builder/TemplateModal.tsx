@@ -55,8 +55,7 @@ function buildHomeTemplate(): BuildResult {
   const c4 = mk("Chip", { label: "Giày", active: false, color: "#0068FF" }, chipRow.id)
   nest(chipRow, c1, c2, c3, c4)
 
-  const section = mk("ZaloSection", { title: "Sản phẩm nổi bật", subtitle: "Xem thêm" })
-  const grid = mk("Grid", { columns: "2", gap: "4", padding: "4" }, section.id)
+  const grid = mk("Grid", { columns: "2", gap: "4", padding: "4" })
 
   const p1 = mk("ProductCard", {
     imageSrc: "https://picsum.photos/seed/prod-a/400/300",
@@ -91,7 +90,6 @@ function buildHomeTemplate(): BuildResult {
     badge: "",
   }, grid.id)
   nest(grid, p1, p2, p3, p4)
-  nest(section, grid)
 
   const bnav = mk("ZaloBottomNav", {
     tab1Label: "Trang chủ", tab1Icon: "🏠", tab1Route: "/",
@@ -100,7 +98,7 @@ function buildHomeTemplate(): BuildResult {
     activeTab: "1",
   })
 
-  return build([header, hero, chipRow, section, bnav], all)
+  return build([header, hero, chipRow, grid, bnav], all)
 }
 
 // ─── Template: Khám phá sản phẩm ─────────────────────────────────────────────
@@ -190,7 +188,6 @@ function buildDetailTemplate(): BuildResult {
   const origPrice = mk("Text", { content: "199.000đ", tag: "span", size: "base", weight: "normal", color: "#9CA3AF", align: "left" }, priceRow.id)
   nest(priceRow, price, origPrice)
 
-  const section = mk("ZaloSection", { title: "Mô tả sản phẩm", subtitle: "" })
   const desc = mk("Text", {
     content: "Áo thun Oversized làm từ 100% cotton cao cấp, thoáng mát và thấm hút mồ hôi tốt. Phong cách streetwear hiện đại, phù hợp nhiều dịp từ đi chơi đến dạo phố.",
     tag: "p",
@@ -198,10 +195,7 @@ function buildDetailTemplate(): BuildResult {
     weight: "normal",
     color: "#6B7280",
     align: "left",
-  }, section.id)
-  nest(section, desc)
-
-  const divider = mk("Divider", { color: "#F3F4F6", thickness: "8px", margin: "none" })
+  })
 
   const progress = mk("ProgressBar", { value: 68, label: "Đã bán 68/100 sản phẩm", color: "#0068FF", bgColor: "#E5E7EB", showLabel: true })
 
@@ -210,7 +204,7 @@ function buildDetailTemplate(): BuildResult {
   const buyBtn = mk("ZaloButton", { label: "Thêm vào giỏ", variant: "primary", fullWidth: true }, btnStack.id)
   nest(btnStack, wishBtn, buyBtn)
 
-  return build([header, image, tagRow, titleText, ratingRow, priceRow, section, divider, progress, btnStack], all)
+  return build([header, image, tagRow, titleText, ratingRow, priceRow, desc, progress, btnStack], all)
 }
 
 // ─── Template: Hồ sơ cá nhân ─────────────────────────────────────────────────
@@ -238,8 +232,7 @@ function buildProfileTemplate(): BuildResult {
   const stat3 = mk("StatCard", { value: "12K", label: "Điểm tích lũy", icon: "heart", color: "#EF4444", trend: "" }, statGrid.id)
   nest(statGrid, stat1, stat2, stat3)
 
-  const settingSection = mk("ZaloSection", { title: "Cài đặt", subtitle: "" })
-  const settingCard = mk("ZaloCard", { padding: "md", shadow: true, rounded: "xl" }, settingSection.id)
+  const settingCard = mk("ZaloCard", { padding: "md", shadow: true, rounded: "xl" })
   const sw1 = mk("Switch", { label: "Nhận thông báo", description: "Đơn hàng, khuyến mãi", checked: true }, settingCard.id)
   const div1 = mk("Divider", { color: "#F3F4F6", thickness: "1px", margin: "none" }, settingCard.id)
   const sw2 = mk("Switch", { label: "Giao diện tối", description: "Chế độ Dark mode", checked: false }, settingCard.id)
@@ -248,7 +241,6 @@ function buildProfileTemplate(): BuildResult {
   const div3 = mk("Divider", { color: "#F3F4F6", thickness: "1px", margin: "none" }, settingCard.id)
   const li2 = mk("ZaloListItem", { title: "Bảo mật & Quyền riêng tư", subtitle: "Xác thực 2 lớp đang bật", showArrow: true, showAvatar: false, avatarText: "" }, settingCard.id)
   nest(settingCard, sw1, div1, sw2, div2, li1, div3, li2)
-  nest(settingSection, settingCard)
 
   const logoutBtn = mk("ZaloButton", { label: "Đăng xuất", variant: "tertiary", fullWidth: true })
 
@@ -259,7 +251,7 @@ function buildProfileTemplate(): BuildResult {
     activeTab: "3",
   })
 
-  return build([header, profileCard, statGrid, settingSection, logoutBtn, bnav], all)
+  return build([header, profileCard, statGrid, settingCard, logoutBtn, bnav], all)
 }
 
 // ─── Template: Thông báo ──────────────────────────────────────────────────────
@@ -355,8 +347,7 @@ function buildCartTemplate(): BuildResult {
   nest(voucherRow, voucherInput, applyBtn)
   nest(voucherCard, voucherRow)
 
-  const summarySection = mk("ZaloSection", { title: "Tổng đơn hàng", subtitle: "" })
-  const summaryCard = mk("ZaloCard", { padding: "md", shadow: true, rounded: "xl" }, summarySection.id)
+  const summaryCard = mk("ZaloCard", { padding: "md", shadow: true, rounded: "xl" })
   const r1 = mk("Stack", { direction: "horizontal", gap: "0", padding: "0", align: "center", background: "transparent" }, summaryCard.id)
   const t1a = mk("Text", { content: "Tạm tính", tag: "span", size: "sm", weight: "normal", color: "#6B7280", align: "left" }, r1.id)
   const t1b = mk("Text", { content: "1.007.000đ", tag: "span", size: "sm", weight: "semibold", color: "#111827", align: "right" }, r1.id)
@@ -372,7 +363,6 @@ function buildCartTemplate(): BuildResult {
   const t3b = mk("Text", { content: "1.007.000đ", tag: "span", size: "lg", weight: "bold", color: "#0068FF", align: "right" }, r3.id)
   nest(r3, t3a, t3b)
   nest(summaryCard, r1, div1, r2, div2, r3)
-  nest(summarySection, summaryCard)
 
   const checkoutBtn = mk("ZaloButton", { label: "Đặt hàng ngay", variant: "primary", fullWidth: true })
 
@@ -383,7 +373,7 @@ function buildCartTemplate(): BuildResult {
     activeTab: "3",
   })
 
-  return build([header, list, voucherCard, summarySection, checkoutBtn, bnav], all)
+  return build([header, list, voucherCard, summaryCard, checkoutBtn, bnav], all)
 }
 
 // ─── Template: Đăng nhập ─────────────────────────────────────────────────────
@@ -451,25 +441,21 @@ function buildDashboardTemplate(): BuildResult {
   const kpis = kpiData.map((k) => mk("StatCard", { ...k }, kpiGrid.id))
   nest(kpiGrid, ...kpis)
 
-  const progressSection = mk("ZaloSection", { title: "Mục tiêu tháng", subtitle: "Xem chi tiết" })
-  const progressCard = mk("ZaloCard", { padding: "md", shadow: true, rounded: "xl" }, progressSection.id)
+  const progressCard = mk("ZaloCard", { padding: "md", shadow: true, rounded: "xl" })
   const pb1 = mk("ProgressBar", { label: "Doanh thu", value: 72, color: "#0068FF", showLabel: true }, progressCard.id)
   const pb2 = mk("ProgressBar", { label: "Đơn hàng", value: 85, color: "#059669", showLabel: true }, progressCard.id)
   const pb3 = mk("ProgressBar", { label: "Khách mới", value: 48, color: "#F59E0B", showLabel: true }, progressCard.id)
   nest(progressCard, pb1, pb2, pb3)
-  nest(progressSection, progressCard)
 
-  const recentSection = mk("ZaloSection", { title: "Đơn hàng gần đây", subtitle: "Xem tất cả" })
-  const recentList = mk("ZaloList", {}, recentSection.id)
+  const recentList = mk("ZaloList", {})
   const recentItems = [
-    { title: "#DH2024088 — Áo thun Oversized", subtitle: "Đang giao · 129.000đ", icon: "🚚" },
-    { title: "#DH2024087 — Quần jeans slim", subtitle: "Hoàn thành · 349.000đ", icon: "✅" },
-    { title: "#DH2024086 — Giày sneaker", subtitle: "Chờ xác nhận · 529.000đ", icon: "⏳" },
+    { title: "#DH2024088 — Áo thun Oversized", subtitle: "Đang giao · 129.000đ" },
+    { title: "#DH2024087 — Quần jeans slim", subtitle: "Hoàn thành · 349.000đ" },
+    { title: "#DH2024086 — Giày sneaker", subtitle: "Chờ xác nhận · 529.000đ" },
   ].map(({ title, subtitle }) =>
     mk("ZaloListItem", { title, subtitle, showArrow: true, showAvatar: false, avatarText: "" }, recentList.id)
   )
   nest(recentList, ...recentItems)
-  nest(recentSection, recentList)
 
   const bnav = mk("ZaloBottomNav", {
     tab1Label: "Dashboard", tab1Icon: "📊", tab1Route: "/",
@@ -478,7 +464,7 @@ function buildDashboardTemplate(): BuildResult {
     activeTab: "1",
   })
 
-  return build([header, greeting, subGreeting, kpiGrid, progressSection, recentSection, bnav], all)
+  return build([header, greeting, subGreeting, kpiGrid, progressCard, recentList, bnav], all)
 }
 
 // ─── Template: Food Order ─────────────────────────────────────────────────────
@@ -504,8 +490,7 @@ function buildFoodOrderTemplate(): BuildResult {
   const c4 = mk("Chip", { label: "🧋 Đồ uống", active: false, color: "#FF6B35" }, chipRow.id)
   nest(chipRow, c1, c2, c3, c4)
 
-  const section = mk("ZaloSection", { title: "Món phổ biến", subtitle: "Xem thêm" })
-  const grid = mk("Grid", { columns: "2", gap: "4", padding: "4" }, section.id)
+  const grid = mk("Grid", { columns: "2", gap: "4", padding: "4" })
   const foods = [
     { name: "Cơm tấm sườn bì chả", price: "45.000đ", seed: "food-a", badge: "Bán chạy" },
     { name: "Phở bò tái nạm gân", price: "65.000đ", seed: "food-b", badge: "" },
@@ -522,7 +507,6 @@ function buildFoodOrderTemplate(): BuildResult {
     }, grid.id)
   )
   nest(grid, ...foods)
-  nest(section, grid)
 
   const bnav = mk("ZaloBottomNav", {
     tab1Label: "Trang chủ", tab1Icon: "🏠", tab1Route: "/",
@@ -531,7 +515,7 @@ function buildFoodOrderTemplate(): BuildResult {
     activeTab: "2",
   })
 
-  return build([header, banner, chipRow, section, bnav], all)
+  return build([header, banner, chipRow, grid, bnav], all)
 }
 
 // ─── Template: Booking ────────────────────────────────────────────────────────
@@ -544,8 +528,7 @@ function buildBookingTemplate(): BuildResult {
 
   const header = mk("ZaloHeader", { title: "Đặt lịch dịch vụ", showBack: true, bgColor: "#7C3AED" })
 
-  const serviceSection = mk("ZaloSection", { title: "Chọn dịch vụ", subtitle: "" })
-  const serviceGrid = mk("Grid", { columns: "2", gap: "3", padding: "4" }, serviceSection.id)
+  const serviceGrid = mk("Grid", { columns: "2", gap: "3", padding: "4" })
   const services = [
     { value: "80K", label: "✂️ Cắt tóc", color: "#7C3AED" },
     { value: "250K", label: "🎨 Nhuộm tóc", color: "#7C3AED" },
@@ -555,16 +538,13 @@ function buildBookingTemplate(): BuildResult {
     mk("StatCard", { value: s.value, label: s.label, icon: "star", color: s.color, trend: "" }, serviceGrid.id)
   )
   nest(serviceGrid, ...services)
-  nest(serviceSection, serviceGrid)
 
-  const timeSection = mk("ZaloSection", { title: "Chọn khung giờ", subtitle: "Hôm nay" })
-  const timeRow = mk("Stack", { direction: "horizontal", gap: "2", padding: "4", background: "transparent", align: "start" }, timeSection.id)
+  const timeRow = mk("Stack", { direction: "horizontal", gap: "2", padding: "4", background: "transparent", align: "start" })
   const t1 = mk("Chip", { label: "09:00", active: false, color: "#7C3AED" }, timeRow.id)
   const t2 = mk("Chip", { label: "10:30", active: true, color: "#7C3AED" }, timeRow.id)
   const t3 = mk("Chip", { label: "14:00", active: false, color: "#7C3AED" }, timeRow.id)
   const t4 = mk("Chip", { label: "15:30", active: false, color: "#7C3AED" }, timeRow.id)
   nest(timeRow, t1, t2, t3, t4)
-  nest(timeSection, timeRow)
 
   const progress = mk("ProgressBar", {
     value: 60,
@@ -576,7 +556,7 @@ function buildBookingTemplate(): BuildResult {
 
   const confirmBtn = mk("ZaloButton", { label: "Xác nhận đặt lịch", variant: "primary", fullWidth: true })
 
-  return build([header, serviceSection, timeSection, progress, confirmBtn], all)
+  return build([header, serviceGrid, timeRow, progress, confirmBtn], all)
 }
 
 // ─── Template: Onboarding ─────────────────────────────────────────────────────
@@ -750,7 +730,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 // ─── CSS Wireframe components ─────────────────────────────────────────────────
 
-function WfHeader({ color = "#93C5FD" }: { color?: string }) {
+function WfHeader({ color = "#3B82F6" }: { color?: string }) {
   return <div style={{ height: 28, background: color, borderRadius: "4px 4px 0 0", marginBottom: 4, flexShrink: 0 }} />
 }
 
@@ -764,10 +744,11 @@ function WfSearchBar() {
   )
 }
 
-function WfChipRow() {
+function WfChipRow({ count = 4 }: { count?: number }) {
+  const widths = [38, 32, 28, 34].slice(0, count)
   return (
     <div style={{ display: "flex", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
-      {[38, 32, 28, 34].map((w, i) => (
+      {widths.map((w, i) => (
         <div key={i} style={{ height: 14, width: w, background: i === 0 ? "#93C5FD" : "#E5E7EB", borderRadius: 7, flexShrink: 0 }} />
       ))}
     </div>
@@ -853,7 +834,7 @@ function WireframeProductList() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       <WfHeader />
       <WfSearchBar />
-      <WfChipRow />
+      <WfChipRow count={3} />
       <WfGrid2 rows={3} />
       <WfBottomNav />
     </div>
@@ -864,16 +845,42 @@ function WireframeDetail() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       <WfHeader />
-      <div style={{ height: 64, background: "#D1D5DB", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
-      <div style={{ padding: "0 4px" }}>
-        <WfTextLine width="80%" bold />
-        <WfTextLine width="50%" />
-        <WfTextLine width="100%" bold />
-        <WfTextLine width="90%" />
-        <WfTextLine width="75%" />
+      {/* Hero image */}
+      <div style={{ height: 60, background: "#D1D5DB", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
+      {/* Tag chips */}
+      <div style={{ display: "flex", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
+        <div style={{ height: 11, width: 36, background: "#DBEAFE", borderRadius: 5, flexShrink: 0 }} />
+        <div style={{ height: 11, width: 40, background: "#D1FAE5", borderRadius: 5, flexShrink: 0 }} />
       </div>
-      <div style={{ padding: "0 4px", marginTop: "auto" }}>
-        <WfButton />
+      {/* Title */}
+      <div style={{ padding: "0 4px" }}>
+        <WfTextLine width="88%" bold />
+      </div>
+      {/* Rating row */}
+      <div style={{ display: "flex", gap: 2, padding: "0 4px", alignItems: "center", marginBottom: 4, flexShrink: 0 }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} style={{ width: 6, height: 6, background: "#FCD34D", borderRadius: "50%", flexShrink: 0 }} />
+        ))}
+        <div style={{ height: 5, width: 30, background: "#E5E7EB", borderRadius: 3, marginLeft: 3 }} />
+      </div>
+      {/* Price row */}
+      <div style={{ display: "flex", gap: 5, padding: "0 4px", alignItems: "center", marginBottom: 4, flexShrink: 0 }}>
+        <div style={{ height: 10, width: 48, background: "#3B82F6", borderRadius: 3, flexShrink: 0 }} />
+        <div style={{ height: 7, width: 32, background: "#E5E7EB", borderRadius: 3, flexShrink: 0 }} />
+      </div>
+      {/* Description */}
+      <div style={{ padding: "0 4px" }}>
+        <WfTextLine width="100%" />
+        <WfTextLine width="80%" />
+      </div>
+      {/* Progress bar */}
+      <div style={{ padding: "0 4px" }}>
+        <WfProgressBar pct={68} color="#3B82F6" />
+      </div>
+      {/* Dual CTA buttons */}
+      <div style={{ display: "flex", gap: 3, padding: "0 4px", marginTop: "auto" }}>
+        <div style={{ flex: 1, height: 20, background: "#E5E7EB", borderRadius: 5, flexShrink: 0 }} />
+        <div style={{ flex: 1, height: 20, background: "#3B82F6", borderRadius: 5, flexShrink: 0 }} />
       </div>
     </div>
   )
@@ -886,12 +893,31 @@ function WireframeCart() {
       <WfListItem />
       <WfListItem />
       <WfListItem />
+      {/* Voucher input row */}
       <WfCard>
-        <WfTextLine width="100%" />
-        <WfTextLine width="65%" />
-        <WfTextLine width="100%" bold />
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          <div style={{ flex: 1, height: 14, background: "#F3F4F6", borderRadius: 4 }} />
+          <div style={{ width: 36, height: 14, background: "#E5E7EB", borderRadius: 4, flexShrink: 0 }} />
+        </div>
       </WfCard>
-      <div style={{ padding: "0 0", marginTop: "auto" }}>
+      {/* Order summary */}
+      <WfCard>
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <WfTextLine width="45%" />
+          <WfTextLine width="30%" />
+        </div>
+        <div style={{ height: 1, background: "#F3F4F6", marginBottom: 4 }} />
+        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+          <WfTextLine width="50%" />
+          <WfTextLine width="25%" />
+        </div>
+        <div style={{ height: 1, background: "#F3F4F6", marginBottom: 4 }} />
+        <div style={{ display: "flex", justifyContent: "space-between" }}>
+          <WfTextLine width="48%" bold />
+          <WfTextLine width="32%" bold />
+        </div>
+      </WfCard>
+      <div style={{ marginTop: "auto" }}>
         <WfButton />
       </div>
       <WfBottomNav />
@@ -903,6 +929,7 @@ function WireframeProfile() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       <WfHeader />
+      {/* UserProfileCard */}
       <WfCard>
         <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
           <div style={{ width: 30, height: 30, borderRadius: "50%", background: "#D1D5DB", flexShrink: 0 }} />
@@ -912,6 +939,7 @@ function WireframeProfile() {
           </div>
         </div>
       </WfCard>
+      {/* 3-col stat grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 4, padding: "0 0", marginBottom: 4, flexShrink: 0 }}>
         {["#DBEAFE", "#FEF3C7", "#FCE7F3"].map((bg, i) => (
           <div key={i} style={{ background: bg, borderRadius: 6, padding: 5 }}>
@@ -920,9 +948,25 @@ function WireframeProfile() {
           </div>
         ))}
       </div>
-      <WfListItem />
-      <WfListItem />
-      <WfListItem />
+      {/* Settings card with switches and list items */}
+      <WfCard>
+        {[{ on: true }, { on: false }].map(({ on }, i) => (
+          <React.Fragment key={i}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+              <div style={{ flex: 1 }}>
+                <WfTextLine width="60%" />
+              </div>
+              <div style={{ width: 22, height: 11, background: on ? "#3B82F6" : "#D1D5DB", borderRadius: 6, flexShrink: 0 }} />
+            </div>
+            <div style={{ height: 1, background: "#F3F4F6", marginBottom: 4 }} />
+          </React.Fragment>
+        ))}
+        <WfTextLine width="55%" />
+        <div style={{ height: 1, background: "#F3F4F6", margin: "4px 0" }} />
+        <WfTextLine width="70%" />
+      </WfCard>
+      {/* Logout button */}
+      <WfButton color="#E5E7EB" />
       <WfBottomNav />
     </div>
   )
@@ -933,7 +977,8 @@ function WireframeNotifications() {
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
       <WfHeader />
       <div style={{ height: 20, background: "#DBEAFE", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
-      <WfChipRow />
+      <WfChipRow count={3} />
+      <WfListItem />
       <WfListItem />
       <WfListItem />
       <WfListItem />
@@ -983,6 +1028,7 @@ function WireframeDashboard() {
       </WfCard>
       <WfListItem />
       <WfListItem />
+      <WfListItem />
       <WfBottomNav />
     </div>
   )
@@ -991,7 +1037,7 @@ function WireframeDashboard() {
 function WireframeFoodOrder() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader color="#FDBA74" />
+      <WfHeader color="#FB923C" />
       <div style={{ height: 20, background: "#FEF3C7", borderRadius: 4, marginBottom: 4, flexShrink: 0 }} />
       <WfChipRow />
       <WfGrid2 rows={2} />
@@ -1003,19 +1049,24 @@ function WireframeFoodOrder() {
 function WireframeBooking() {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", overflow: "hidden" }}>
-      <WfHeader color="#C4B5FD" />
+      <WfHeader color="#8B5CF6" />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
         {[0, 1, 2, 3].map((i) => (
           <div key={i} style={{ background: "#EDE9FE", borderRadius: 6, padding: 5, height: 32 }}>
-            <div style={{ height: 6, background: "rgba(124,58,237,0.2)", borderRadius: 3, marginBottom: 3, width: "65%" }} />
-            <div style={{ height: 5, background: "rgba(124,58,237,0.1)", borderRadius: 3 }} />
+            <div style={{ height: 6, background: "rgba(124,58,237,0.25)", borderRadius: 3, marginBottom: 3, width: "65%" }} />
+            <div style={{ height: 5, background: "rgba(124,58,237,0.15)", borderRadius: 3 }} />
           </div>
         ))}
       </div>
-      <WfChipRow />
-      <WfProgressBar pct={60} color="#C4B5FD" />
-      <div style={{ padding: "0 0", marginTop: "auto" }}>
-        <WfButton color="#C4B5FD" />
+      {/* Time slot chips */}
+      <div style={{ display: "flex", gap: 4, padding: "0 4px", marginBottom: 4, flexShrink: 0 }}>
+        {[32, 30, 30, 30].map((w, i) => (
+          <div key={i} style={{ height: 14, width: w, background: i === 1 ? "#8B5CF6" : "#E5E7EB", borderRadius: 7, flexShrink: 0 }} />
+        ))}
+      </div>
+      <WfProgressBar pct={60} color="#8B5CF6" />
+      <div style={{ marginTop: "auto" }}>
+        <WfButton color="#8B5CF6" />
       </div>
     </div>
   )

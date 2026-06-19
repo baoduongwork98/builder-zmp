@@ -2,6 +2,64 @@ import type React from "react"
 
 export type PropType = "string" | "number" | "boolean" | "color" | "select" | "textarea" | "toggle" | "page-select"
 
+// ─── Variable system ──────────────────────────────────────────────────────────
+
+export type VariableType = "string" | "number" | "boolean" | "list" | "object"
+export type VariableScope = "app" | "page"
+
+export interface Variable {
+  id: string
+  name: string
+  scope: VariableScope
+  /** Page id — only set when scope === "page" */
+  pageId?: string
+  type: VariableType
+  defaultValue: unknown
+}
+
+// ─── API Integration ──────────────────────────────────────────────────────────
+
+export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE"
+
+export interface ApiHeader {
+  key: string
+  value: string
+}
+
+export interface ApiDefinition {
+  id: string
+  name: string
+  url: string
+  method: HttpMethod
+  headers: ApiHeader[]
+  /** JSON string template — supports {{variableName}} interpolation */
+  body: string
+  /** After a successful call, store response into this variable name */
+  responseVariable: string
+  /** Optional dot-path to extract from response, e.g. "data.items" */
+  responseKey: string
+}
+
+// ─── Action system ────────────────────────────────────────────────────────────
+
+export type Action =
+  | { type: "navigate"; to: string }
+  | { type: "openUrl"; url: string }
+  | { type: "openPhone"; phone: string }
+  | { type: "openProfile"; userId: string }
+  | { type: "followOA"; oaId: string }
+  | { type: "showSnackbar"; message: string }
+  | { type: "share" }
+  | { type: "setState"; variable: string; value: string }
+  | { type: "callApi"; apiId: string }
+
+export type EventType = "onClick" | "onChange"
+
+export interface NodeEvents {
+  onClick?: Action
+  onChange?: Action
+}
+
 export interface PropSchema {
   label: string
   type: PropType
@@ -9,12 +67,29 @@ export interface PropSchema {
   options?: string[]
 }
 
+/** prop key → variable name */
+export type PropBindings = Record<string, string>
+
+export interface ListBinding {
+  /** Variable name (must be type "list") */
+  variable: string
+  /** Alias for each item inside children, e.g. "item" */
+  itemAlias: string
+}
+
 export interface ComponentNode {
   id: string
   type: string
   props: Record<string, unknown>
+  events?: NodeEvents
   children: string[]
   parentId: string | null
+  /** Bind props to variables: { propKey: variableName } */
+  bindings?: PropBindings
+  /** When set, this node renders once per list item */
+  listBinding?: ListBinding
+  /** Hide this node when the named variable is falsy */
+  visibleWhen?: string
 }
 
 export interface ComponentDefinition {
@@ -67,4 +142,6 @@ export interface BuilderState {
   history: { pages: PageSchema[]; currentPageId: string }[]
   historyIndex: number
   appConfig: AppConfig
+  variables: Variable[]
+  apis: ApiDefinition[]
 }

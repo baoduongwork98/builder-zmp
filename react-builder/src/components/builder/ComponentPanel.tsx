@@ -28,7 +28,7 @@ function ComponentTooltip({ def, y }: { def: ComponentDefinition; y: number }) {
   return (
     <div
       className="fixed z-50 w-56 rounded-xl border border-[#2A2A32] bg-[#1E1E24] shadow-2xl p-3 pointer-events-none"
-      style={{ left: 216, top: clampedY }}
+      style={{ left: 40 + 192 + 8, top: clampedY }}
     >
       {/* Header */}
       <div className="flex items-center gap-2 mb-2.5">
@@ -135,11 +135,29 @@ export function ComponentPanel() {
     y: number
   } | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current)
     }
+  }, [])
+
+  // Cmd+K / Ctrl+K focuses search
+  useEffect(() => {
+    function handleKey(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault()
+        inputRef.current?.focus()
+        inputRef.current?.select()
+      }
+      if (e.key === "Escape" && document.activeElement === inputRef.current) {
+        setSearch("")
+        inputRef.current?.blur()
+      }
+    }
+    document.addEventListener("keydown", handleKey)
+    return () => document.removeEventListener("keydown", handleKey)
   }, [])
 
   function showTooltip(def: ComponentDefinition, y: number) {
@@ -152,13 +170,11 @@ export function ComponentPanel() {
     setTooltip(null)
   }
 
+  const q = search.toLowerCase()
   const grouped = categoryOrder.reduce(
     (acc, cat) => {
       const items = Object.values(registry).filter(
-        (d) =>
-          d.category === cat &&
-          (search === "" ||
-            d.label.toLowerCase().includes(search.toLowerCase()))
+        (d) => d.category === cat && (q === "" || d.label.toLowerCase().includes(q))
       )
       if (items.length) acc[cat] = items
       return acc
@@ -177,23 +193,30 @@ export function ComponentPanel() {
           <div className="relative">
             <svg
               className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-700 pointer-events-none"
-              width="11"
-              height="11"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
+              width="11" height="11" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5"
             >
               <circle cx="11" cy="11" r="8" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
+              ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Tìm kiếm..."
-              className="w-full text-[11px] bg-[#1A1A1E] border border-[#2A2A32] rounded-lg pl-7 pr-2.5 py-1.5 outline-none focus:border-[#0068FF]/60 text-zinc-300 placeholder:text-zinc-700 transition-colors"
+              placeholder="Tìm kiếm... (⌘K)"
+              className="w-full text-[11px] bg-[#1A1A1E] border border-[#2A2A32] rounded-lg pl-7 pr-7 py-1.5 outline-none focus:border-[#0068FF]/60 text-zinc-300 placeholder:text-zinc-700 transition-colors"
             />
+            {search && (
+              <button
+                onClick={() => { setSearch(""); inputRef.current?.focus() }}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-400 transition-colors"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 

@@ -186,7 +186,9 @@ export function Topbar() {
     }
   }, [editingPageId])
 
-  const exportFiles = exportToZMP({ pages: allPages, appConfig })
+  const variables = useBuilderStore((s) => s.variables)
+  const apis = useBuilderStore((s) => s.apis)
+  const exportFiles = exportToZMP({ pages: allPages, appConfig, variables, apis })
 
   const handleCopy = async (filename: string, content: string) => {
     await navigator.clipboard.writeText(content)

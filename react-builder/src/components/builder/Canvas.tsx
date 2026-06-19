@@ -1,10 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { useDroppable } from "@dnd-kit/core"
 import { useBuilderStore, selectCurrentPage } from "@/store/builderStore"
 import { CanvasNode, DropZone } from "./CanvasNode"
 import { PhoneMockup } from "./PhoneMockup"
 import { useIsDraggingAny } from "./BuilderDnd"
+import { TemplateModal } from "./TemplateModal"
 import { cn } from "@/lib/utils"
 import { ComponentNode, PageSchema } from "@/types/builder"
 
@@ -32,15 +34,14 @@ interface RootDropZoneProps {
   rootIds: string[]
   nodes: Record<string, ComponentNode>
   isDraggingAny: boolean
+  onOpenTemplates: () => void
 }
 
-function RootDropZone({ rootIds, nodes, isDraggingAny }: RootDropZoneProps) {
-  // Layout components are rendered separately at the bottom — exclude from page flow
+function RootDropZone({ rootIds, nodes, isDraggingAny, onOpenTemplates }: RootDropZoneProps) {
   const contentIds = rootIds.filter((id) => !LAYOUT_NODE_TYPES.has(nodes[id]?.type))
 
   const { setNodeRef, isOver } = useDroppable({
     id: "root-canvas",
-    // Insert index places new nodes before any layout components in rootIds
     data: { parentId: null, index: contentIds.length },
   })
 
@@ -53,18 +54,24 @@ function RootDropZone({ rootIds, nodes, isDraggingAny }: RootDropZoneProps) {
       )}
     >
       {contentIds.length === 0 ? (
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
-          <div
-            className="w-10 h-10 rounded-xl border-2 border-dashed border-zinc-300 flex items-center justify-center mb-3"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a1a1aa" strokeWidth="2" strokeLinecap="round">
+        <div className="absolute inset-0 flex flex-col items-center justify-center select-none">
+          <div className="w-12 h-12 rounded-2xl border-2 border-dashed border-zinc-200 flex items-center justify-center mb-4">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d4d4d8" strokeWidth="2" strokeLinecap="round">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
           </div>
-          <p className="text-zinc-400 text-[11px] font-medium text-center">
-            Keo component vao day
-          </p>
+          <p className="text-zinc-300 text-[12px] font-medium mb-3">Kéo component vào đây</p>
+          <button
+            onClick={(e) => { e.stopPropagation(); onOpenTemplates() }}
+            className="flex items-center gap-1.5 text-[11px] font-semibold text-[#0068FF] border border-[#0068FF]/30 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
+              <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
+            </svg>
+            Chọn template
+          </button>
         </div>
       ) : (
         <>
@@ -84,12 +91,12 @@ export function Canvas() {
   const allPages = useBuilderStore((s) => s.pages)
   const viewport = useBuilderStore((s) => s.viewport)
   const setSelected = useBuilderStore((s) => s.setSelected)
+  const [showTemplates, setShowTemplates] = useState(false)
 
   const rootIds = currentPage?.rootIds ?? []
   const nodes = currentPage?.nodes ?? {}
   const isDraggingAny = useIsDraggingAny()
 
-  // BottomNav lives on any page but renders globally across all canvas views
   const bottomNavEntry = findGlobalBottomNav(allPages)
   const bottomNavContent = bottomNavEntry ? (
     <CanvasNode
@@ -100,42 +107,47 @@ export function Canvas() {
   ) : null
 
   const canvasContent = (
-    <RootDropZone rootIds={rootIds} nodes={nodes} isDraggingAny={isDraggingAny} />
+    <RootDropZone
+      rootIds={rootIds}
+      nodes={nodes}
+      isDraggingAny={isDraggingAny}
+      onOpenTemplates={() => setShowTemplates(true)}
+    />
   )
 
   return (
-    <div
-      className="flex-1 overflow-auto"
-      style={{
-        background: viewport === "mobile"
-          ? "#1A1A1E"
-          : "#ECEDF2",
-        backgroundImage: viewport === "mobile"
-          ? "radial-gradient(circle, #2A2A32 1px, transparent 1px)"
-          : "radial-gradient(circle, #D4D5DC 1px, transparent 1px)",
-        backgroundSize: "24px 24px",
-      }}
-      onClick={() => setSelected(null)}
-    >
-      {viewport === "mobile" ? (
-        <PhoneMockup bottomNav={bottomNavContent}>
-          {canvasContent}
-        </PhoneMockup>
-      ) : (
-        <div
-          className="mx-auto transition-all duration-300 min-h-full shadow-sm flex flex-col"
-          style={{ width: VIEWPORT_WIDTH[viewport] }}
-        >
-          <div className="flex-1">
+    <>
+      <div
+        className="flex-1 overflow-auto"
+        style={{
+          background: viewport === "mobile" ? "#1A1A1E" : "#ECEDF2",
+          backgroundImage: viewport === "mobile"
+            ? "radial-gradient(circle, #2A2A32 1px, transparent 1px)"
+            : "radial-gradient(circle, #D4D5DC 1px, transparent 1px)",
+          backgroundSize: "24px 24px",
+        }}
+        onClick={() => setSelected(null)}
+      >
+        {viewport === "mobile" ? (
+          <PhoneMockup bottomNav={bottomNavContent}>
             {canvasContent}
+          </PhoneMockup>
+        ) : (
+          <div
+            className="mx-auto transition-all duration-300 min-h-full shadow-sm flex flex-col"
+            style={{ width: VIEWPORT_WIDTH[viewport] }}
+          >
+            <div className="flex-1">{canvasContent}</div>
+            {bottomNavContent && (
+              <div className="sticky bottom-0 left-0 right-0 z-10">
+                {bottomNavContent}
+              </div>
+            )}
           </div>
-          {bottomNavContent && (
-            <div className="sticky bottom-0 left-0 right-0 z-10">
-              {bottomNavContent}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+
+      {showTemplates && <TemplateModal onClose={() => setShowTemplates(false)} />}
+    </>
   )
 }

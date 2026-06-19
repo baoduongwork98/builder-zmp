@@ -1,4 +1,4 @@
-import { ComponentNode, PageSchema, AppConfig } from "@/types/builder"
+import { ComponentNode, PageSchema, AppConfig, Action, NodeEvents, Variable, ApiDefinition } from "@/types/builder"
 import { registry } from "@/registry/index"
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -33,6 +33,65 @@ function makeComponentName(pageName: string, usedNames: Set<string>): string {
 
 const LAYOUT_COMPONENT_TYPES = new Set(["ZaloBottomNav"])
 
+// ─── Action → code string ─────────────────────────────────────────────────────
+
+function actionToCode(action: Action): string {
+  switch (action.type) {
+    case "navigate":    return `navigate("${action.to}")`
+    case "openUrl":     return `openExternalLink({ url: "${action.url}" })`
+    case "openPhone":   return `openPhone({ phone: "${action.phone}" })`
+    case "openProfile": return `openProfile({ userId: "${action.userId}" })`
+    case "followOA":    return `followOA({ id: "${action.oaId}" })`
+    case "showSnackbar":return `openSnackbar({ text: "${action.message}", type: "success" })`
+    case "share":       return `openShareSheet({ type: "zmp", data: { title: "", thumbnail: "", path: "/" } })`
+    case "setState":    return `set${capitalize(action.variable)}(${JSON.stringify(action.value)})`
+    case "callApi":     return `await call_${action.apiId}()`
+    default:            return ""
+  }
+}
+
+function capitalize(s: string) {
+  return s ? s[0].toUpperCase() + s.slice(1) : s
+}
+
+/** Returns the zmp-sdk named imports required by an action */
+function sdkImportsForAction(action: Action): string[] {
+  switch (action.type) {
+    case "openUrl":     return ["openExternalLink"]
+    case "openPhone":   return ["openPhone"]
+    case "openProfile": return ["openProfile"]
+    case "followOA":    return ["followOA"]
+    case "showSnackbar":return ["openSnackbar"]
+    case "share":       return ["openShareSheet"]
+    default:            return []
+  }
+}
+
+/** Collect all zmp-sdk imports needed by event handlers across a page */
+function collectSDKImports(nodes: Record<string, ComponentNode>, rootIds: string[]): string[] {
+  const imports = new Set<string>()
+  const walk = (id: string) => {
+    const node = nodes[id]
+    if (!node) return
+    for (const action of Object.values(node.events ?? {}) as Array<Action | undefined>) {
+      if (!action) continue
+      sdkImportsForAction(action).forEach((i) => imports.add(i))
+    }
+    node.children.forEach(walk)
+  }
+  rootIds.forEach(walk)
+  return Array.from(imports).sort()
+}
+
+/** Generate event handler props string for a node, e.g. onClick={() => navigate("/")} */
+function eventProps(events: NodeEvents | undefined): string {
+  if (!events) return ""
+  const parts: string[] = []
+  if (events.onClick) parts.push(`onClick={() => ${actionToCode(events.onClick)}}`)
+  if (events.onChange) parts.push(`onChange={() => ${actionToCode(events.onChange)}}`)
+  return parts.length ? " " + parts.join(" ") : ""
+}
+
 // ─── Node → JSX string ────────────────────────────────────────────────────────
 
 function nodeToJSX(id: string, nodes: Record<string, ComponentNode>, level: number): string {
@@ -41,6 +100,8 @@ function nodeToJSX(id: string, nodes: Record<string, ComponentNode>, level: numb
   if (LAYOUT_COMPONENT_TYPES.has(node.type)) return ""
   const def = registry[node.type]
   if (!def) return ""
+
+  const evtProps = eventProps(node.events)
 
   // Lazy children renderer — each component controls at what indent level its children appear
   const renderChildren = (childLevel: number): string =>
@@ -51,7 +112,11 @@ function nodeToJSX(id: string, nodes: Record<string, ComponentNode>, level: numb
 
   // Prefer the component's own toJSX for accurate prop mapping
   if (def.toJSX) {
-    return def.toJSX(node.props, renderChildren, level)
+    // Pass event props via a special wrapper when the component has events
+    const base = def.toJSX(node.props, renderChildren, level)
+    if (!evtProps) return base
+    // Inject event props into the first opening tag
+    return base.replace(/^(\s*<\w+)/, `$1${evtProps}`)
   }
 
   // Generic fallback: self-closing or wrapping with zmpComponent name
@@ -59,8 +124,8 @@ function nodeToJSX(id: string, nodes: Record<string, ComponentNode>, level: numb
   const comp = def.zmpComponent ?? def.type
   const childrenJSX = def.acceptsChildren ? renderChildren(level + 1) : ""
 
-  if (!childrenJSX) return `${pad}<${comp} />`
-  return `${pad}<${comp}>\n${childrenJSX}\n${pad}</${comp}>`
+  if (!childrenJSX) return `${pad}<${comp}${evtProps} />`
+  return `${pad}<${comp}${evtProps}>\n${childrenJSX}\n${pad}</${comp}>`
 }
 
 // ─── Import collection ────────────────────────────────────────────────────────
@@ -99,16 +164,34 @@ function generatePageFile(page: PageSchema, componentName: string): string {
     .join("\n")
 
   const collected = collectZMPImports(page.nodes, page.rootIds)
-  // When there's no ZaloPage root, add Page to the import list for the auto-wrapper
-  const allImports = hasPageRoot
-    ? collected
-    : Array.from(new Set(["Page", ...collected])).sort()
 
-  const zmpImportLine = allImports.length
-    ? `import { ${allImports.join(", ")} } from "zmp-ui"\n`
+  // Check if any event action needs useNavigate
+  const sdkImports = collectSDKImports(page.nodes, page.rootIds)
+  const needsNavigate = (() => {
+    const walk = (id: string): boolean => {
+      const node = page.nodes[id]
+      if (!node) return false
+      if (Object.values(node.events ?? {}).some((a) => a?.type === "navigate")) return true
+      return node.children.some(walk)
+    }
+    return page.rootIds.some(walk)
+  })()
+
+  // When there's no ZaloPage root, add Page to the import list for the auto-wrapper
+  const zmpBaseImports = hasPageRoot ? collected : Array.from(new Set(["Page", ...collected])).sort()
+  const allZmpImports = needsNavigate
+    ? Array.from(new Set(["useNavigate", ...zmpBaseImports])).sort()
+    : zmpBaseImports
+
+  const zmpImportLine = allZmpImports.length
+    ? `import { ${allZmpImports.join(", ")} } from "zmp-ui"\n`
     : ""
 
-  const navigateHook = allImports.includes("useNavigate") ? "\n  const navigate = useNavigate()" : ""
+  const sdkImportLine = sdkImports.length
+    ? `import { ${sdkImports.join(", ")} } from "zmp-sdk"\n`
+    : ""
+
+  const navigateHook = needsNavigate ? "\n  const navigate = useNavigate()" : ""
 
   if (hasPageRoot) {
     const body = bodyLines || `    {/* Chưa có nội dung */}`
@@ -116,7 +199,7 @@ function generatePageFile(page: PageSchema, componentName: string): string {
     const needsFragment = page.rootIds.length > 1
     if (needsFragment) {
       const indentedBody = body.split("\n").map((line) => `  ${line}`).join("\n")
-      return `${zmpImportLine}
+      return `${zmpImportLine}${sdkImportLine}
 export default function ${componentName}() {${navigateHook}
   return (
     <>
@@ -126,7 +209,7 @@ ${indentedBody}
 }
 `
     }
-    return `${zmpImportLine}
+    return `${zmpImportLine}${sdkImportLine}
 export default function ${componentName}() {${navigateHook}
   return (
 ${body}
@@ -136,7 +219,7 @@ ${body}
   }
 
   const body = bodyLines || `      {/* Chưa có nội dung */}`
-  return `${zmpImportLine}
+  return `${zmpImportLine}${sdkImportLine}
 export default function ${componentName}() {${navigateHook}
   return (
     <Page>
@@ -555,14 +638,191 @@ function generateZmpCliJson(appConfig: AppConfig): string {
   )
 }
 
+// ─── Variable atoms generator ─────────────────────────────────────────────────
+
+function generateVariablesFile(variables: Variable[]): string {
+  if (variables.length === 0) return `import { atom } from "jotai"\n\n// Chưa có biến nào được định nghĩa\n`
+
+  const atomLines = variables.map((v) => {
+    const defaultStr = JSON.stringify(v.defaultValue ?? null)
+    return `export const ${v.name}Atom = atom(${defaultStr})`
+  })
+
+  return `import { atom } from "jotai"\n\n${atomLines.join("\n")}\n`
+}
+
+// ─── API services generator ───────────────────────────────────────────────────
+
+function generateApiServicesFile(apis: ApiDefinition[], variables: Variable[]): string {
+  if (apis.length === 0) return `// Chưa có API nào được định nghĩa\n`
+
+  const varMap = Object.fromEntries(variables.map((v) => [v.id, v.name]))
+
+  const functions = apis.map((api) => {
+    const responseVar = api.responseVariable ? variables.find((v) => v.name === api.responseVariable) : null
+    const hasBody = ["POST", "PUT", "PATCH"].includes(api.method) && api.body
+    const headersObj = Object.fromEntries(
+      api.headers.filter((h) => h.key).map((h) => [h.key, h.value])
+    )
+    if (hasBody && !headersObj["Content-Type"]) headersObj["Content-Type"] = "application/json"
+
+    const headersStr = Object.keys(headersObj).length
+      ? `, headers: ${JSON.stringify(headersObj)}`
+      : ""
+
+    const bodyStr = hasBody ? `, body: \`${api.body}\`` : ""
+
+    const extractKey = api.responseKey
+      ? api.responseKey.split(".").reduce((acc, k) => `${acc}?.["${k}"]`, "data")
+      : "data"
+
+    const storeResult = responseVar
+      ? `\n  const result = ${extractKey}\n  set${capitalize(responseVar.name)}(result)`
+      : ""
+
+    // Interpolate {{varName}} in URL
+    const urlExpr = api.url.replace(/\{\{(\w+)\}\}/g, (_: string, name: string) => `\${${name}}`)
+    const urlStr = urlExpr.includes("${") ? `\`${urlExpr}\`` : `"${api.url}"`
+
+    const setterImport = responseVar ? `\n  // set${capitalize(responseVar.name)} must be passed from component via closure` : ""
+    void varMap
+    void setterImport
+
+    return `export async function call_${api.id}(set${capitalize(responseVar?.name ?? "result")}: (v: unknown) => void = () => {}) {
+  try {
+    const res = await fetch(${urlStr}, { method: "${api.method}"${headersStr}${bodyStr} })
+    if (!res.ok) throw new Error(\`HTTP \${res.status}\`)
+    const data = await res.json()${storeResult ? storeResult : ""}
+    return data
+  } catch (err) {
+    console.error("[API:${api.name}]", err)
+  }
+}`
+  })
+
+  return `// Auto-generated API service functions\n\n${functions.join("\n\n")}\n`
+}
+
+// ─── Page-level state imports ─────────────────────────────────────────────────
+
+function collectPageStateImports(
+  nodes: Record<string, ComponentNode>,
+  rootIds: string[],
+  variables: Variable[],
+  pageId: string,
+  apis: ApiDefinition[]
+): { atomImports: string[]; apiImports: string[]; setters: string[] } {
+  const usedVarNames = new Set<string>()
+  const usedApiIds = new Set<string>()
+
+  const walk = (id: string) => {
+    const node = nodes[id]
+    if (!node) return
+    // bindings
+    if (node.bindings) Object.values(node.bindings).forEach((n) => usedVarNames.add(n))
+    // listBinding
+    if (node.listBinding) usedVarNames.add(node.listBinding.variable)
+    // visibleWhen
+    if (node.visibleWhen) usedVarNames.add(node.visibleWhen)
+    // events
+    for (const action of Object.values(node.events ?? {}) as Array<Action | undefined>) {
+      if (!action) continue
+      if (action.type === "setState") usedVarNames.add(action.variable)
+      if (action.type === "callApi") usedApiIds.add(action.apiId)
+    }
+    node.children.forEach(walk)
+  }
+  rootIds.forEach(walk)
+
+  const relevantVars = variables.filter(
+    (v) => usedVarNames.has(v.name) && (v.scope === "app" || (v.scope === "page" && v.pageId === pageId))
+  )
+
+  const atomImports = relevantVars.map((v) => `${v.name}Atom`)
+  const setters = relevantVars.map((v) => `const [${v.name}, set${capitalize(v.name)}] = useAtom(${v.name}Atom)`)
+  const apiImports = Array.from(usedApiIds).map((id) => `call_${id}`)
+
+  return { atomImports, apiImports, setters }
+}
+
+// ─── Node → JSX string with bindings ─────────────────────────────────────────
+
+function nodeToJSXWithBindings(
+  id: string,
+  nodes: Record<string, ComponentNode>,
+  level: number,
+  variables: Variable[]
+): string {
+  const node = nodes[id]
+  if (!node) return ""
+  if (LAYOUT_COMPONENT_TYPES.has(node.type)) return ""
+  const def = registry[node.type]
+  if (!def) return ""
+
+  const pad = indent(level)
+
+  // Merge props with bindings
+  const resolvedProps: Record<string, unknown> = { ...node.props }
+  if (node.bindings) {
+    for (const [key, varName] of Object.entries(node.bindings)) {
+      resolvedProps[key] = `__EXPR__${varName}`
+    }
+  }
+
+  // Build event props
+  const evtParts: string[] = []
+  if (node.events?.onClick) evtParts.push(`onClick={() => ${actionToCode(node.events.onClick)}}`)
+  if (node.events?.onChange) evtParts.push(`onChange={() => ${actionToCode(node.events.onChange)}}`)
+  const evtProps = evtParts.length ? " " + evtParts.join(" ") : ""
+
+  const renderChildren = (childLevel: number): string =>
+    node.children
+      .map((childId) => nodeToJSXWithBindings(childId, nodes, childLevel, variables))
+      .filter(Boolean)
+      .join("\n")
+
+  // Generate JSX string
+  let jsx: string
+  if (def.toJSX) {
+    const base = def.toJSX(resolvedProps, renderChildren, level)
+    jsx = evtProps ? base.replace(/^(\s*<\w+)/, `$1${evtProps}`) : base
+  } else {
+    const comp = def.zmpComponent ?? def.type
+    const childrenJSX = def.acceptsChildren ? renderChildren(level + 1) : ""
+    jsx = !childrenJSX
+      ? `${pad}<${comp}${evtProps} />`
+      : `${pad}<${comp}${evtProps}>\n${childrenJSX}\n${pad}</${comp}>`
+  }
+
+  // Replace __EXPR__ placeholders with JSX expressions
+  jsx = jsx.replace(/"__EXPR__(\w+)"/g, (_: string, name: string) => `{${name}}`)
+
+  // Wrap with list binding
+  if (node.listBinding?.variable) {
+    const alias = node.listBinding.itemAlias || "item"
+    const indented = jsx.split("\n").map((l) => `  ${l}`).join("\n")
+    jsx = `${pad}{${node.listBinding.variable}.map((${alias}, _idx) => (\n${indented}\n${pad}))}`
+  }
+
+  // Wrap with visibility condition
+  if (node.visibleWhen) {
+    const indented = jsx.split("\n").map((l) => `  ${l}`).join("\n")
+    jsx = `${pad}{${node.visibleWhen} && (\n${indented}\n${pad})}`
+  }
+
+  return jsx
+}
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 
 interface ExportInput {
   pages: PageSchema[]
   appConfig: AppConfig
+  variables?: Variable[]
+  apis?: ApiDefinition[]
 }
 
-export function exportToZMP({ pages, appConfig }: ExportInput): Record<string, string> {
+export function exportToZMP({ pages, appConfig, variables = [], apis = [] }: ExportInput): Record<string, string> {
   const files: Record<string, string> = {}
   const usedNames = new Set<string>()
 
@@ -574,7 +834,7 @@ export function exportToZMP({ pages, appConfig }: ExportInput): Record<string, s
   }))
 
   pageInfo.forEach(({ page, componentName, filename }) => {
-    files[`src/pages/${filename}.tsx`] = generatePageFile(page, componentName)
+    files[`src/pages/${filename}.tsx`] = generatePageFileWithBindings(page, componentName, variables, apis)
   })
 
   const bottomNavProps = findBottomNavProps(pages)
@@ -584,6 +844,10 @@ export function exportToZMP({ pages, appConfig }: ExportInput): Record<string, s
 
   files["src/components/layout.tsx"] = generateLayout(pageInfo, !!bottomNavProps)
   files["app-config.json"] = generateAppConfig(appConfig)
+
+  // State + API generated files
+  files["src/state/variables.ts"] = generateVariablesFile(variables)
+  files["src/services/api.ts"] = generateApiServicesFile(apis, variables)
 
   // Static files from template
   files["index.html"] = STATIC_INDEX_HTML
@@ -602,6 +866,84 @@ export function exportToZMP({ pages, appConfig }: ExportInput): Record<string, s
   files["zmp-cli.json"] = generateZmpCliJson(appConfig)
 
   return files
+}
+
+// ─── Page file generator with bindings ───────────────────────────────────────
+
+function generatePageFileWithBindings(
+  page: PageSchema,
+  componentName: string,
+  variables: Variable[],
+  apis: ApiDefinition[]
+): string {
+  const hasPageRoot = page.rootIds.some((id) => page.nodes[id]?.type === "ZaloPage")
+  const rootLevel = hasPageRoot ? 2 : 3
+
+  const { atomImports, apiImports, setters } = collectPageStateImports(
+    page.nodes, page.rootIds, variables, page.id, apis
+  )
+
+  const bodyLines = page.rootIds
+    .map((id) => nodeToJSXWithBindings(id, page.nodes, rootLevel, variables))
+    .filter(Boolean)
+    .join("\n")
+
+  const collected = collectZMPImports(page.nodes, page.rootIds)
+  const sdkImports = collectSDKImports(page.nodes, page.rootIds)
+
+  const needsNavigate = (() => {
+    const walk = (id: string): boolean => {
+      const node = page.nodes[id]
+      if (!node) return false
+      if (Object.values(node.events ?? {}).some((a) => a?.type === "navigate")) return true
+      return node.children.some(walk)
+    }
+    return page.rootIds.some(walk)
+  })()
+
+  const needsAsync = apiImports.length > 0
+
+  const zmpBaseImports = hasPageRoot ? collected : Array.from(new Set(["Page", ...collected])).sort()
+  const allZmpImports = needsNavigate
+    ? Array.from(new Set(["useNavigate", ...zmpBaseImports])).sort()
+    : zmpBaseImports
+
+  const zmpImportLine = allZmpImports.length ? `import { ${allZmpImports.join(", ")} } from "zmp-ui"\n` : ""
+  const sdkImportLine = sdkImports.length ? `import { ${sdkImports.join(", ")} } from "zmp-sdk"\n` : ""
+  const atomImportLine = atomImports.length ? `import { ${atomImports.join(", ")} } from "@/state/variables"\n` : ""
+  const useAtomImportLine = atomImports.length ? `import { useAtom } from "jotai"\n` : ""
+  const apiImportLine = apiImports.length ? `import { ${apiImports.join(", ")} } from "@/services/api"\n` : ""
+
+  const navigateHook = needsNavigate ? "\n  const navigate = useNavigate()" : ""
+  const setterLines = setters.length ? "\n  " + setters.join("\n  ") : ""
+  const asyncNote = needsAsync ? "  // API calls use async handlers — attach to onClick/onChange events\n" : ""
+
+  const hookBlock = `${navigateHook}${setterLines}`
+
+  const body = bodyLines || (hasPageRoot ? `    {/* Chưa có nội dung */}` : `      {/* Chưa có nội dung */}`)
+
+  if (hasPageRoot) {
+    const needsFragment = page.rootIds.length > 1
+    const indentedBody = needsFragment ? body.split("\n").map((l) => `  ${l}`).join("\n") : body
+    const returnContent = needsFragment ? `    <>\n${indentedBody}\n    </>` : body
+    return `${zmpImportLine}${sdkImportLine}${useAtomImportLine}${atomImportLine}${apiImportLine}
+export default function ${componentName}() {${hookBlock}
+${asyncNote}  return (
+${returnContent}
+  )
+}
+`
+  }
+
+  return `${zmpImportLine}${sdkImportLine}${useAtomImportLine}${atomImportLine}${apiImportLine}
+export default function ${componentName}() {${hookBlock}
+${asyncNote}  return (
+    <Page>
+${body}
+    </Page>
+  )
+}
+`
 }
 
 // Legacy single-page export — kept for compatibility
