@@ -1454,6 +1454,249 @@ const heroSectionDef: ComponentDefinition = {
     `${ind(level)}<div className="relative w-full overflow-hidden rounded-2xl">{/* HeroSection: ${props.heading} */}</div>`,
 }
 
+const statIconMap: Record<string, React.ElementType> = {
+  user:  RiUserLine,
+  cart:  RiShoppingCartLine,
+  money: RiMoneyDollarCircleLine,
+  chart: RiBarChartLine,
+  heart: RiHeartLine,
+  star:  RiStarLine,
+}
+
+const statCardDef: ComponentDefinition = {
+  type: "StatCard",
+  label: "Stat Card",
+  icon: RiBarChartLine,
+  description: "Thẻ số liệu với icon, giá trị lớn và nhãn — dùng trong Grid 3 cột",
+  category: "ui",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: { value: "1,234", label: "Khách hàng", icon: "user", color: "#0068FF", trend: "+12%" },
+  propSchema: {
+    value: { label: "Giá trị", type: "string", defaultValue: "1,234" },
+    label: { label: "Nhãn", type: "string", defaultValue: "Khách hàng" },
+    icon: {
+      label: "Icon",
+      type: "select",
+      defaultValue: "user",
+      options: ["user", "cart", "money", "chart", "heart", "star"],
+    },
+    color: { label: "Màu icon", type: "color", defaultValue: "#0068FF" },
+    trend: { label: "Trend (để trống = ẩn)", type: "string", defaultValue: "+12%" },
+  },
+  renderer: (props) => {
+    const IconComp = statIconMap[props.icon as string] ?? RiUserLine
+    const lightBg = `${props.color as string}18`
+    return (
+      <div
+        className="bg-white p-4"
+        style={{ borderRadius: tk.radius.lg, border: tk.border, boxShadow: tk.shadow.xs }}
+      >
+        <div className="flex items-start justify-between mb-3">
+          <div
+            className="w-10 h-10 flex items-center justify-center rounded-xl"
+            style={{ background: lightBg }}
+          >
+            <IconComp style={{ fontSize: 20, color: props.color as string }} />
+          </div>
+          {(props.trend as string) && (
+            <span
+              className="text-[11px] font-semibold rounded-md px-1.5 py-0.5"
+              style={{ background: "rgba(16,185,129,0.1)", color: "#059669" }}
+            >
+              {props.trend as string}
+            </span>
+          )}
+        </div>
+        <p className="text-[22px] font-bold mb-0.5" style={{ color: tk.textPrimary }}>
+          {props.value as string}
+        </p>
+        <p className="text-[12px]" style={{ color: tk.textSecondary }}>
+          {props.label as string}
+        </p>
+      </div>
+    )
+  },
+  toJSX: (props, _renderChildren, level) =>
+    `${ind(level)}<div className="bg-white rounded-xl p-4 shadow-sm border border-black/5">{/* StatCard: ${props.label} */}</div>`,
+}
+
+const userProfileCardDef: ComponentDefinition = {
+  type: "UserProfileCard",
+  label: "Profile Card",
+  icon: RiUserLine,
+  description: "Card hồ sơ người dùng với avatar, tên, bio và 3 chỉ số",
+  category: "zalo",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: {
+    avatarSrc: "",
+    name: "Nguyễn Văn A",
+    bio: "Yêu thích khám phá và mua sắm trực tuyến",
+    stat1Label: "Bài đăng",    stat1Value: "128",
+    stat2Label: "Theo dõi",    stat2Value: "2.4K",
+    stat3Label: "Đang theo dõi", stat3Value: "186",
+  },
+  propSchema: {
+    avatarSrc:   { label: "URL avatar", type: "string", defaultValue: "" },
+    name:        { label: "Tên",        type: "string", defaultValue: "Nguyễn Văn A" },
+    bio:         { label: "Bio",        type: "string", defaultValue: "Yêu thích khám phá và mua sắm" },
+    stat1Label:  { label: "Nhãn 1",     type: "string", defaultValue: "Bài đăng" },
+    stat1Value:  { label: "Giá trị 1",  type: "string", defaultValue: "128" },
+    stat2Label:  { label: "Nhãn 2",     type: "string", defaultValue: "Theo dõi" },
+    stat2Value:  { label: "Giá trị 2",  type: "string", defaultValue: "2.4K" },
+    stat3Label:  { label: "Nhãn 3",     type: "string", defaultValue: "Đang theo dõi" },
+    stat3Value:  { label: "Giá trị 3",  type: "string", defaultValue: "186" },
+  },
+  renderer: (props) => {
+    const initials = (props.name as string)
+      .split(" ")
+      .map((n: string) => n[0])
+      .slice(-2)
+      .join("")
+      .toUpperCase()
+    const stats = [
+      { label: props.stat1Label as string, value: props.stat1Value as string },
+      { label: props.stat2Label as string, value: props.stat2Value as string },
+      { label: props.stat3Label as string, value: props.stat3Value as string },
+    ]
+    return (
+      <div
+        className="bg-white overflow-hidden"
+        style={{ borderRadius: tk.radius.lg, border: tk.border, boxShadow: tk.shadow.sm }}
+      >
+        <div className="h-[72px]" style={{ background: tk.accentGrad }} />
+        <div className="flex flex-col items-center -mt-9 pb-4 px-4">
+          <div
+            className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center text-white font-bold text-xl"
+            style={{
+              background: "linear-gradient(135deg, #0068FF, #7C3AED)",
+              boxShadow: "0 0 0 3px white, 0 0 0 5px rgba(0,104,255,0.2)",
+            }}
+          >
+            {(props.avatarSrc as string) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={props.avatarSrc as string}
+                alt={props.name as string}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              initials
+            )}
+          </div>
+          <h3 className="mt-2 font-bold" style={{ fontSize: 16, color: tk.textPrimary }}>
+            {props.name as string}
+          </h3>
+          <p className="text-[12px] mt-0.5 text-center" style={{ color: tk.textSecondary }}>
+            {props.bio as string}
+          </p>
+          <div
+            className="flex w-full mt-3 pt-3"
+            style={{ borderTop: "1px solid rgba(0,0,0,0.05)" }}
+          >
+            {stats.map((stat, i) => (
+              <div
+                key={i}
+                className="flex-1 flex flex-col items-center"
+                style={{ borderLeft: i > 0 ? "1px solid rgba(0,0,0,0.05)" : "none" }}
+              >
+                <span className="font-bold" style={{ fontSize: 16, color: tk.textPrimary }}>
+                  {stat.value}
+                </span>
+                <span className="text-[11px]" style={{ color: tk.textSecondary }}>
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  },
+  toJSX: (props, _renderChildren, level) =>
+    `${ind(level)}<div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5">{/* UserProfileCard: ${props.name} */}</div>`,
+}
+
+const notifIconMap: Record<string, React.ElementType> = {
+  check: RiCheckboxCircleLine,
+  info:  RiInformationLine,
+  user:  RiUserLine,
+  cart:  RiShoppingCartLine,
+  star:  RiStarLine,
+  heart: RiHeartLine,
+}
+
+const notificationItemDef: ComponentDefinition = {
+  type: "NotificationItem",
+  label: "Notification",
+  icon: RiAlertLine,
+  description: "Mục thông báo với icon màu, tiêu đề, nội dung và thời gian",
+  category: "zalo",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: {
+    title: "Đơn hàng đã được giao",
+    body: "Đơn hàng #1234 của bạn đã được giao thành công.",
+    time: "2 phút trước",
+    icon: "check",
+    iconColor: "#0068FF",
+    unread: true,
+  },
+  propSchema: {
+    title:     { label: "Tiêu đề",   type: "string",  defaultValue: "Đơn hàng đã được giao" },
+    body:      { label: "Nội dung",  type: "string",  defaultValue: "Đơn hàng #1234 của bạn đã được giao thành công." },
+    time:      { label: "Thời gian", type: "string",  defaultValue: "2 phút trước" },
+    icon: {
+      label: "Icon",
+      type: "select",
+      defaultValue: "check",
+      options: ["check", "info", "user", "cart", "star", "heart"],
+    },
+    iconColor: { label: "Màu icon",  type: "color",   defaultValue: "#0068FF" },
+    unread:    { label: "Chưa đọc",  type: "boolean", defaultValue: true },
+  },
+  renderer: (props) => {
+    const IconComp = notifIconMap[props.icon as string] ?? RiInformationLine
+    const lightBg = `${props.iconColor as string}18`
+    return (
+      <div
+        className="flex items-start gap-3 px-4 py-3 bg-white"
+        style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}
+      >
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+          style={{ background: lightBg }}
+        >
+          <IconComp style={{ fontSize: 18, color: props.iconColor as string }} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p
+            className={`text-[13px] truncate ${(props.unread as boolean) ? "font-semibold" : "font-medium"}`}
+            style={{ color: tk.textPrimary }}
+          >
+            {props.title as string}
+          </p>
+          <p className="text-[12px] mt-0.5 truncate" style={{ color: tk.textSecondary }}>
+            {props.body as string}
+          </p>
+          <p className="text-[11px] mt-0.5" style={{ color: tk.textTertiary }}>
+            {props.time as string}
+          </p>
+        </div>
+        {(props.unread as boolean) && (
+          <div
+            className="w-2 h-2 rounded-full shrink-0 mt-1.5"
+            style={{ background: tk.accent }}
+          />
+        )}
+      </div>
+    )
+  },
+  toJSX: (props, _renderChildren, level) =>
+    `${ind(level)}<div className="flex items-start gap-3 px-4 py-3">{/* NotificationItem: ${props.title} */}</div>`,
+}
+
 // ─── Registry exports ─────────────────────────────────────────────────────────
 
 export const registry: Record<string, ComponentDefinition> = {
@@ -1471,6 +1714,9 @@ export const registry: Record<string, ComponentDefinition> = {
   ZaloSearchBar: zaloSearchBarDef,
   ZaloSection: zaloSectionDef,
   ProductCard: productCardDef,
+  StatCard: statCardDef,
+  UserProfileCard: userProfileCardDef,
+  NotificationItem: notificationItemDef,
   // Layout
   Stack: stackDef,
   Grid: gridDef,
