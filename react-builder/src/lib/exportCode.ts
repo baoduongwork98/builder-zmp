@@ -29,11 +29,16 @@ function makeComponentName(pageName: string, usedNames: Set<string>): string {
   return name
 }
 
+// ─── Layout-level components (extracted from pages into shared layout) ───────
+
+const LAYOUT_COMPONENT_TYPES = new Set(["ZaloBottomNav"])
+
 // ─── Node → JSX string ────────────────────────────────────────────────────────
 
 function nodeToJSX(id: string, nodes: Record<string, ComponentNode>, level: number): string {
   const node = nodes[id]
   if (!node) return ""
+  if (LAYOUT_COMPONENT_TYPES.has(node.type)) return ""
   const def = registry[node.type]
   if (!def) return ""
 
@@ -66,6 +71,7 @@ function collectZMPImports(nodes: Record<string, ComponentNode>, rootIds: string
   const walk = (id: string): void => {
     const node = nodes[id]
     if (!node) return
+    if (LAYOUT_COMPONENT_TYPES.has(node.type)) return
     const def = registry[node.type]
     // Use explicit zmpImports list; fall back to zmpComponent for unported defs
     if (def?.zmpImports) {
@@ -102,6 +108,8 @@ function generatePageFile(page: PageSchema, componentName: string): string {
     ? `import { ${allImports.join(", ")} } from "zmp-ui"\n`
     : ""
 
+  const navigateHook = allImports.includes("useNavigate") ? "\n  const navigate = useNavigate()" : ""
+
   if (hasPageRoot) {
     const body = bodyLines || `    {/* Chưa có nội dung */}`
     // Wrap in Fragment only when there are multiple root nodes alongside ZaloPage
@@ -109,7 +117,7 @@ function generatePageFile(page: PageSchema, componentName: string): string {
     if (needsFragment) {
       const indentedBody = body.split("\n").map((line) => `  ${line}`).join("\n")
       return `${zmpImportLine}
-export default function ${componentName}() {
+export default function ${componentName}() {${navigateHook}
   return (
     <>
 ${indentedBody}
@@ -119,7 +127,7 @@ ${indentedBody}
 `
     }
     return `${zmpImportLine}
-export default function ${componentName}() {
+export default function ${componentName}() {${navigateHook}
   return (
 ${body}
   )
@@ -129,11 +137,56 @@ ${body}
 
   const body = bodyLines || `      {/* Chưa có nội dung */}`
   return `${zmpImportLine}
-export default function ${componentName}() {
+export default function ${componentName}() {${navigateHook}
   return (
     <Page>
 ${body}
     </Page>
+  )
+}
+`
+}
+
+// ─── BottomNavigation component generator ────────────────────────────────────
+
+function findBottomNavProps(pages: PageSchema[]): Record<string, unknown> | null {
+  for (const page of pages) {
+    for (const node of Object.values(page.nodes)) {
+      if (node.type === "ZaloBottomNav") return node.props
+    }
+  }
+  return null
+}
+
+function generateBottomNavFile(props: Record<string, unknown>): string {
+  const tabs = [
+    { key: "1", label: (props.tab1Label as string) ?? "", icon: (props.tab1Icon as string) ?? "", route: (props.tab1Route as string) ?? "" },
+    { key: "2", label: (props.tab2Label as string) ?? "", icon: (props.tab2Icon as string) ?? "", route: (props.tab2Route as string) ?? "" },
+    { key: "3", label: (props.tab3Label as string) ?? "", icon: (props.tab3Icon as string) ?? "", route: (props.tab3Route as string) ?? "" },
+  ].filter((tab) => tab.label || tab.icon || tab.route)
+
+  const tabsJson = JSON.stringify(tabs, null, 2)
+
+  return `import { useNavigate } from "zmp-ui"
+
+const tabs = ${tabsJson}
+
+export default function BottomNavigation() {
+  const navigate = useNavigate()
+
+  return (
+    <div className="fixed bottom-0 left-0 w-full flex items-center justify-around bg-white border-t border-gray-200 h-14 px-2 shrink-0">
+      {tabs.map((tab) => (
+        <button
+          key={tab.key}
+          className="flex flex-col items-center gap-0.5 flex-1"
+          onClick={() => { if (tab.route) navigate(tab.route) }}
+        >
+          <span className="text-xl leading-none">{tab.icon}</span>
+          <span className="text-[10px] font-medium text-gray-500">{tab.label}</span>
+        </button>
+      ))}
+    </div>
   )
 }
 `
@@ -147,10 +200,14 @@ interface PageInfo {
   filename: string
 }
 
-function generateLayout(pageInfo: PageInfo[]): string {
+function generateLayout(pageInfo: PageInfo[], hasBottomNav: boolean): string {
   const pageImports = pageInfo
     .map(({ componentName, filename }) => `import ${componentName} from "@/pages/${filename}"`)
     .join("\n")
+
+  const bottomNavImport = hasBottomNav
+    ? `import BottomNavigation from "@/components/bottom-navigation"\n`
+    : ""
 
   const routes = pageInfo
     .map(({ page, componentName }) =>
@@ -158,11 +215,13 @@ function generateLayout(pageInfo: PageInfo[]): string {
     )
     .join("\n")
 
+  const bottomNavJSX = hasBottomNav ? `\n          <BottomNavigation />` : ""
+
   return `import { getSystemInfo } from "zmp-sdk"
 import { App, AnimationRoutes, Route, SnackbarProvider, ZMPRouter } from "zmp-ui"
 import { AppProps } from "zmp-ui/app"
 ${pageImports}
-
+${bottomNavImport}
 const Layout = () => {
   const systemInfo = (() => {
     try { return getSystemInfo() } catch { return {} as ReturnType<typeof getSystemInfo> }
@@ -174,7 +233,7 @@ const Layout = () => {
         <ZMPRouter>
           <AnimationRoutes>
 ${routes}
-          </AnimationRoutes>
+          </AnimationRoutes>${bottomNavJSX}
         </ZMPRouter>
       </SnackbarProvider>
     </App>
@@ -366,6 +425,11 @@ module.exports = {
 };
 `
 
+const STATIC_ENV = `# Điền APP_ID của ứng dụng Zalo Mini App vào đây (bắt buộc)
+APP_ID=
+ZMP_TOKEN=
+`
+
 const STATIC_GITIGNORE = `
 # Logs
 logs
@@ -513,7 +577,12 @@ export function exportToZMP({ pages, appConfig }: ExportInput): Record<string, s
     files[`src/pages/${filename}.tsx`] = generatePageFile(page, componentName)
   })
 
-  files["src/components/layout.tsx"] = generateLayout(pageInfo)
+  const bottomNavProps = findBottomNavProps(pages)
+  if (bottomNavProps) {
+    files["src/components/bottom-navigation.tsx"] = generateBottomNavFile(bottomNavProps)
+  }
+
+  files["src/components/layout.tsx"] = generateLayout(pageInfo, !!bottomNavProps)
   files["app-config.json"] = generateAppConfig(appConfig)
 
   // Static files from template
@@ -526,6 +595,7 @@ export function exportToZMP({ pages, appConfig }: ExportInput): Record<string, s
   files["tailwind.config.js"] = STATIC_TAILWIND_CONFIG
   files["postcss.config.js"] = STATIC_POSTCSS_CONFIG
   files[".gitignore"] = STATIC_GITIGNORE
+  files[".env"] = STATIC_ENV
 
   // Dynamic config files
   files["package.json"] = generatePackageJson(appConfig)

@@ -6,12 +6,26 @@ import { CanvasNode, DropZone } from "./CanvasNode"
 import { PhoneMockup } from "./PhoneMockup"
 import { useIsDraggingAny } from "./BuilderDnd"
 import { cn } from "@/lib/utils"
-import { ComponentNode } from "@/types/builder"
+import { ComponentNode, PageSchema } from "@/types/builder"
 
 const VIEWPORT_WIDTH: Record<string, string> = {
   desktop: "100%",
   tablet: "768px",
   mobile: "375px",
+}
+
+// Component types that render at layout level, not inline with page content
+const LAYOUT_NODE_TYPES = new Set(["ZaloBottomNav"])
+
+function findGlobalBottomNav(
+  pages: PageSchema[]
+): { node: ComponentNode; nodes: Record<string, ComponentNode> } | null {
+  for (const page of pages) {
+    for (const node of Object.values(page.nodes)) {
+      if (node.type === "ZaloBottomNav") return { node, nodes: page.nodes }
+    }
+  }
+  return null
 }
 
 interface RootDropZoneProps {
@@ -21,9 +35,13 @@ interface RootDropZoneProps {
 }
 
 function RootDropZone({ rootIds, nodes, isDraggingAny }: RootDropZoneProps) {
+  // Layout components are rendered separately at the bottom — exclude from page flow
+  const contentIds = rootIds.filter((id) => !LAYOUT_NODE_TYPES.has(nodes[id]?.type))
+
   const { setNodeRef, isOver } = useDroppable({
     id: "root-canvas",
-    data: { parentId: null, index: rootIds.length },
+    // Insert index places new nodes before any layout components in rootIds
+    data: { parentId: null, index: contentIds.length },
   })
 
   return (
@@ -34,7 +52,7 @@ function RootDropZone({ rootIds, nodes, isDraggingAny }: RootDropZoneProps) {
         isOver && "ring-2 ring-[#0068FF]/40 ring-inset"
       )}
     >
-      {rootIds.length === 0 ? (
+      {contentIds.length === 0 ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none">
           <div
             className="w-10 h-10 rounded-xl border-2 border-dashed border-zinc-300 flex items-center justify-center mb-3"
@@ -50,11 +68,11 @@ function RootDropZone({ rootIds, nodes, isDraggingAny }: RootDropZoneProps) {
         </div>
       ) : (
         <>
-          {rootIds.flatMap((id, i) => [
+          {contentIds.flatMap((id, i) => [
             <DropZone key={`dz-${i}`} parentId={null} index={i} isVisible={isDraggingAny} />,
             <CanvasNode key={id} id={id} nodes={nodes} isDraggingAny={isDraggingAny} />,
           ])}
-          <DropZone key="dz-last" parentId={null} index={rootIds.length} isVisible={isDraggingAny} />
+          <DropZone key="dz-last" parentId={null} index={contentIds.length} isVisible={isDraggingAny} />
         </>
       )}
     </div>
@@ -63,12 +81,23 @@ function RootDropZone({ rootIds, nodes, isDraggingAny }: RootDropZoneProps) {
 
 export function Canvas() {
   const currentPage = useBuilderStore(selectCurrentPage)
+  const allPages = useBuilderStore((s) => s.pages)
   const viewport = useBuilderStore((s) => s.viewport)
   const setSelected = useBuilderStore((s) => s.setSelected)
 
   const rootIds = currentPage?.rootIds ?? []
   const nodes = currentPage?.nodes ?? {}
   const isDraggingAny = useIsDraggingAny()
+
+  // BottomNav lives on any page but renders globally across all canvas views
+  const bottomNavEntry = findGlobalBottomNav(allPages)
+  const bottomNavContent = bottomNavEntry ? (
+    <CanvasNode
+      id={bottomNavEntry.node.id}
+      nodes={bottomNavEntry.nodes}
+      isDraggingAny={isDraggingAny}
+    />
+  ) : null
 
   const canvasContent = (
     <RootDropZone rootIds={rootIds} nodes={nodes} isDraggingAny={isDraggingAny} />
@@ -89,15 +118,22 @@ export function Canvas() {
       onClick={() => setSelected(null)}
     >
       {viewport === "mobile" ? (
-        <PhoneMockup>
+        <PhoneMockup bottomNav={bottomNavContent}>
           {canvasContent}
         </PhoneMockup>
       ) : (
         <div
-          className="mx-auto transition-all duration-300 min-h-full shadow-sm"
+          className="mx-auto transition-all duration-300 min-h-full shadow-sm flex flex-col"
           style={{ width: VIEWPORT_WIDTH[viewport] }}
         >
-          {canvasContent}
+          <div className="flex-1">
+            {canvasContent}
+          </div>
+          {bottomNavContent && (
+            <div className="sticky bottom-0 left-0 right-0 z-10">
+              {bottomNavContent}
+            </div>
+          )}
         </div>
       )}
     </div>

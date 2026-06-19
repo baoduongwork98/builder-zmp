@@ -455,12 +455,22 @@ const zaloCardDef: ComponentDefinition = {
     rounded: { label: "Bo góc", type: "select", defaultValue: "xl", options: ["none", "md", "lg", "xl", "2xl"] },
   },
   renderer: (props, children) => {
-    const paddingClass: Record<string, string> = { none: "p-0", sm: "p-3", md: "p-4", lg: "p-6" }
+    const paddingMap: Record<string, string> = { none: "p-0", sm: "p-3", md: "p-4", lg: "p-5" }
+    const radiusMap: Record<string, number> = { none: 0, md: 12, lg: 16, xl: 18, "2xl": 24 }
     return (
       <div
-        className={`bg-white ${paddingClass[props.padding as string] ?? "p-4"} rounded-${props.rounded as string} ${props.shadow ? "shadow-sm" : ""} min-h-[40px]`}
+        className={`bg-white ${paddingMap[props.padding as string] ?? "p-4"} min-h-[40px]`}
+        style={{
+          borderRadius: radiusMap[props.rounded as string] ?? 18,
+          border: tk.border,
+          boxShadow: props.shadow ? tk.shadow.sm : "none",
+        }}
       >
-        {children ?? <span className="text-gray-300 text-xs">Thả component vào đây</span>}
+        {children ?? (
+          <span className="text-xs" style={{ color: tk.textTertiary }}>
+            Thả component vào đây
+          </span>
+        )}
       </div>
     )
   },
@@ -487,7 +497,14 @@ const zaloListDef: ComponentDefinition = {
   defaultProps: {},
   propSchema: {},
   renderer: (_props, children) => (
-    <div className="bg-white rounded-xl overflow-hidden shadow-sm divide-y divide-gray-100">
+    <div
+      className="bg-white overflow-hidden"
+      style={{
+        borderRadius: tk.radius.xl,
+        border: tk.border,
+        boxShadow: tk.shadow.xs,
+      }}
+    >
       {children ?? (
         <>
           {[
@@ -495,12 +512,20 @@ const zaloListDef: ComponentDefinition = {
             { title: "Mục thứ hai", sub: "Mô tả ngắn gọn" },
             { title: "Mục thứ ba", sub: "Mô tả ngắn gọn" },
           ].map((item, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3">
+            <div
+              key={i}
+              className="flex items-center gap-3 px-4 py-3"
+              style={{ borderTop: i > 0 ? "1px solid rgba(0,0,0,0.05)" : "none" }}
+            >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{item.title}</p>
-                <p className="text-xs text-gray-500 truncate mt-0.5">{item.sub}</p>
+                <p className="text-[14px] font-semibold truncate" style={{ color: tk.textPrimary }}>
+                  {item.title}
+                </p>
+                <p className="text-[12px] truncate mt-0.5" style={{ color: tk.textSecondary }}>
+                  {item.sub}
+                </p>
               </div>
-              <span className="text-gray-400 text-lg shrink-0">›</span>
+              <RiArrowRightSLine style={{ fontSize: 20, color: tk.textTertiary, flexShrink: 0 }} />
             </div>
           ))}
         </>
@@ -532,20 +557,33 @@ const zaloListItemDef: ComponentDefinition = {
     avatarText: { label: "Avatar text", type: "string", defaultValue: "Z" },
   },
   renderer: (props) => (
-    <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-100">
+    <div
+      className="flex items-center gap-3 px-4 py-3 bg-white"
+      style={{ borderBottom: "1px solid rgba(0,0,0,0.05)" }}
+    >
       {(props.showAvatar as boolean) && (
-        <div className="w-10 h-10 rounded-full bg-[#0068FF] flex items-center justify-center text-white text-sm font-semibold shrink-0">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0"
+          style={{
+            background: "linear-gradient(135deg, #0068FF, #7C3AED)",
+            boxShadow: "0 0 0 2px white, 0 0 0 4px rgba(0,104,255,0.15)",
+          }}
+        >
           {props.avatarText as string}
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 truncate">{props.title as string}</p>
+        <p className="text-[14px] font-semibold truncate" style={{ color: tk.textPrimary }}>
+          {props.title as string}
+        </p>
         {(props.subtitle as string) && (
-          <p className="text-xs text-gray-500 truncate mt-0.5">{props.subtitle as string}</p>
+          <p className="text-[12px] truncate mt-0.5" style={{ color: tk.textSecondary }}>
+            {props.subtitle as string}
+          </p>
         )}
       </div>
       {(props.showArrow as boolean) && (
-        <span className="text-gray-400 text-lg shrink-0">›</span>
+        <RiArrowRightSLine style={{ fontSize: 20, color: tk.textTertiary, flexShrink: 0 }} />
       )}
     </div>
   ),
@@ -574,20 +612,43 @@ const zaloAvatarDef: ComponentDefinition = {
     showName: { label: "Hiện tên", type: "boolean", defaultValue: true },
   },
   renderer: (props) => {
-    const sizeClass: Record<string, string> = { sm: "w-8 h-8 text-xs", md: "w-12 h-12 text-sm", lg: "w-16 h-16 text-base", xl: "w-20 h-20 text-lg" }
-    const initials = (props.name as string).split(" ").map((n: string) => n[0]).slice(-2).join("").toUpperCase()
+    const sizeClass: Record<string, string> = {
+      sm: "w-8 h-8 text-xs",
+      md: "w-12 h-12 text-sm",
+      lg: "w-16 h-16 text-base",
+      xl: "w-20 h-20 text-lg",
+    }
+    const initials = (props.name as string)
+      .split(" ")
+      .map((n: string) => n[0])
+      .slice(-2)
+      .join("")
+      .toUpperCase()
     return (
       <div className="flex flex-col items-center gap-2">
         {(props.src as string) ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={props.src as string} alt={props.name as string} className={`${sizeClass[props.size as string]} rounded-full object-cover`} />
+          <img
+            src={props.src as string}
+            alt={props.name as string}
+            className={`${sizeClass[props.size as string]} rounded-full object-cover`}
+            style={{ boxShadow: "0 0 0 2px white, 0 0 0 4px rgba(0,104,255,0.2)" }}
+          />
         ) : (
-          <div className={`${sizeClass[props.size as string]} rounded-full bg-[#0068FF] flex items-center justify-center text-white font-semibold`}>
+          <div
+            className={`${sizeClass[props.size as string]} rounded-full flex items-center justify-center text-white font-bold`}
+            style={{
+              background: "linear-gradient(135deg, #0068FF 0%, #7C3AED 100%)",
+              boxShadow: "0 0 0 2px white, 0 0 0 4px rgba(0,104,255,0.2)",
+            }}
+          >
             {initials}
           </div>
         )}
         {(props.showName as boolean) && (
-          <span className="text-sm font-medium text-gray-800">{props.name as string}</span>
+          <span className="text-[13px] font-semibold" style={{ color: tk.textPrimary }}>
+            {props.name as string}
+          </span>
         )}
       </div>
     )
@@ -623,16 +684,21 @@ const zaloTagDef: ComponentDefinition = {
     color: { label: "Màu", type: "select", defaultValue: "blue", options: ["blue", "green", "red", "yellow", "purple", "gray"] },
   },
   renderer: (props) => {
-    const colorClass: Record<string, string> = {
-      blue: "bg-blue-50 text-[#0068FF] border-blue-200",
-      green: "bg-green-50 text-green-700 border-green-200",
-      red: "bg-red-50 text-red-700 border-red-200",
-      yellow: "bg-yellow-50 text-yellow-700 border-yellow-200",
-      purple: "bg-purple-50 text-purple-700 border-purple-200",
-      gray: "bg-gray-100 text-gray-700 border-gray-200",
+    const colorMap: Record<string, { bg: string; text: string; dot: string }> = {
+      blue:   { bg: "rgba(0,104,255,0.08)",   text: "#0068FF",  dot: "#0068FF" },
+      green:  { bg: "rgba(16,185,129,0.08)",   text: "#059669",  dot: "#10B981" },
+      red:    { bg: "rgba(239,68,68,0.08)",    text: "#DC2626",  dot: "#EF4444" },
+      yellow: { bg: "rgba(245,158,11,0.08)",   text: "#B45309",  dot: "#F59E0B" },
+      purple: { bg: "rgba(124,58,237,0.08)",   text: "#7C3AED",  dot: "#7C3AED" },
+      gray:   { bg: "rgba(107,114,128,0.08)",  text: "#4B5563",  dot: "#9CA3AF" },
     }
+    const c = colorMap[props.color as string] ?? colorMap.blue
     return (
-      <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border ${colorClass[props.color as string] ?? colorClass.blue}`}>
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-semibold"
+        style={{ background: c.bg, color: c.text }}
+      >
+        <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: c.dot }} />
         {props.label as string}
       </span>
     )

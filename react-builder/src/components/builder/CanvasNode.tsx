@@ -123,6 +123,8 @@ export function CanvasNode({ id, nodes, depth = 0, isDraggingAny }: CanvasNodePr
 
   const rendered = def.renderer(node.props, children ? <>{children}</> : undefined)
 
+  const isBottomNav = node.type === "ZaloBottomNav"
+
   return (
     <div
       ref={(el) => {
@@ -132,6 +134,7 @@ export function CanvasNode({ id, nodes, depth = 0, isDraggingAny }: CanvasNodePr
       {...listeners}
       {...attributes}
       onClick={handleClick}
+      style={isBottomNav ? { position: "sticky", bottom: 0, zIndex: 10 } : undefined}
       className={cn(
         "relative group",
         isDragging ? "opacity-30 cursor-grabbing" : "cursor-grab",

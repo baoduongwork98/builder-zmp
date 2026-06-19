@@ -5,6 +5,7 @@ import JSZip from "jszip"
 import { useBuilderStore } from "@/store/builderStore"
 import { exportToZMP } from "@/lib/exportCode"
 import { QRPreviewModal } from "./QRPreviewModal"
+import { GitHubExportTab } from "./GitHubExportTab"
 
 function UndoIcon() {
   return (
@@ -129,10 +130,32 @@ export function Topbar() {
   const appConfig = useBuilderStore((s) => s.appConfig)
   const allPages = useBuilderStore((s) => s.pages)
 
-  const [showExport, setShowExport] = useState(false)
+  // Detect GitHub OAuth redirect on first render — initialize state directly
+  const [showExport, setShowExport] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false
+    const p = new URLSearchParams(window.location.search)
+    return !!p.get("github_token") || !!p.get("github_error")
+  })
+  const [exportTab, setExportTab] = useState<"files" | "github">(() => {
+    if (typeof window === "undefined") return "files"
+    const p = new URLSearchParams(window.location.search)
+    return p.get("github_token") || p.get("github_error") ? "github" : "files"
+  })
   const [showQR, setShowQR] = useState(false)
   const [copied, setCopied] = useState<string | null>(null)
   const [downloading, setDownloading] = useState(false)
+
+  // Side-effects only: persist token + clean up URL after OAuth redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get("github_token")
+    if (token) {
+      localStorage.setItem("github_token", token)
+      window.history.replaceState({}, "", window.location.pathname)
+    } else if (params.get("github_error")) {
+      window.history.replaceState({}, "", window.location.pathname)
+    }
+  }, [])
 
   const PREVIEW_W = 430
   const PREVIEW_H = 932
@@ -357,27 +380,29 @@ export function Topbar() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100 shrink-0">
               <div>
                 <h2 className="text-sm font-semibold text-zinc-900 tracking-tight">Export Zalo Mini App</h2>
-                <p className="text-xs text-zinc-400 mt-0.5">Tải xuống ZIP hoặc copy từng file vào project template</p>
+                <p className="text-xs text-zinc-400 mt-0.5">Tải xuống ZIP, copy từng file, hoặc push lên GitHub</p>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDownloadZip}
-                  disabled={downloading}
-                  className="flex items-center gap-1.5 bg-[#0068FF] hover:bg-blue-500 disabled:opacity-60 text-white text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm"
-                >
-                  {downloading ? (
-                    <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M21 12a9 9 0 1 1-6.219-8.56" />
-                    </svg>
-                  ) : (
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="7 10 12 15 17 10" />
-                      <line x1="12" y1="15" x2="12" y2="3" />
-                    </svg>
-                  )}
-                  {downloading ? "Đang tạo..." : "Tải ZIP"}
-                </button>
+                {exportTab === "files" && (
+                  <button
+                    onClick={handleDownloadZip}
+                    disabled={downloading}
+                    className="flex items-center gap-1.5 bg-[#0068FF] hover:bg-blue-500 disabled:opacity-60 text-white text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors shadow-sm"
+                  >
+                    {downloading ? (
+                      <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                      </svg>
+                    ) : (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                    )}
+                    {downloading ? "Đang tạo..." : "Tải ZIP"}
+                  </button>
+                )}
                 <button
                   onClick={() => setShowExport(false)}
                   className="w-7 h-7 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-600 flex items-center justify-center text-base transition-colors"
@@ -399,31 +424,64 @@ export function Topbar() {
               <span className="text-xs text-zinc-400">{pages.length} trang</span>
             </div>
 
-            {/* File list */}
-            <div className="overflow-y-auto flex-1 divide-y divide-zinc-100">
-              {Object.entries(exportFiles).map(([filename, content]) => (
-                <div key={filename} className="p-5">
-                  <div className="flex items-center justify-between mb-2.5">
-                    <code className="text-[12px] font-semibold text-zinc-700 bg-zinc-100 px-2.5 py-1 rounded-md font-mono">
-                      {filename}
-                    </code>
-                    <button
-                      onClick={() => handleCopy(filename, content)}
-                      className={`text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${
-                        copied === filename
-                          ? "bg-green-100 text-green-700"
-                          : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                      }`}
-                    >
-                      {copied === filename ? "Copied" : "Copy"}
-                    </button>
-                  </div>
-                  <pre className="text-[11px] font-mono text-zinc-500 leading-relaxed bg-zinc-50 border border-zinc-100 p-4 rounded-xl overflow-x-auto max-h-44 scrollbar-hide">
-                    {content}
-                  </pre>
-                </div>
-              ))}
+            {/* Tabs */}
+            <div className="flex border-b border-zinc-100 shrink-0 px-5">
+              <button
+                onClick={() => setExportTab("files")}
+                className={`py-2.5 text-[11px] font-medium border-b-2 transition-colors mr-4 ${
+                  exportTab === "files"
+                    ? "border-[#0068FF] text-[#0068FF]"
+                    : "border-transparent text-zinc-400 hover:text-zinc-600"
+                }`}
+              >
+                Files
+              </button>
+              <button
+                onClick={() => setExportTab("github")}
+                className={`py-2.5 text-[11px] font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+                  exportTab === "github"
+                    ? "border-[#0068FF] text-[#0068FF]"
+                    : "border-transparent text-zinc-400 hover:text-zinc-600"
+                }`}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                </svg>
+                GitHub
+              </button>
             </div>
+
+            {/* Tab content */}
+            {exportTab === "files" ? (
+              <div className="overflow-y-auto flex-1 divide-y divide-zinc-100">
+                {Object.entries(exportFiles).map(([filename, content]) => (
+                  <div key={filename} className="p-5">
+                    <div className="flex items-center justify-between mb-2.5">
+                      <code className="text-[12px] font-semibold text-zinc-700 bg-zinc-100 px-2.5 py-1 rounded-md font-mono">
+                        {filename}
+                      </code>
+                      <button
+                        onClick={() => handleCopy(filename, content)}
+                        className={`text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors ${
+                          copied === filename
+                            ? "bg-green-100 text-green-700"
+                            : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                        }`}
+                      >
+                        {copied === filename ? "Copied" : "Copy"}
+                      </button>
+                    </div>
+                    <pre className="text-[11px] font-mono text-zinc-500 leading-relaxed bg-zinc-50 border border-zinc-100 p-4 rounded-xl overflow-x-auto max-h-44 scrollbar-hide">
+                      {content}
+                    </pre>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="overflow-y-auto flex-1">
+                <GitHubExportTab files={exportFiles} />
+              </div>
+            )}
           </div>
         </div>
       )}

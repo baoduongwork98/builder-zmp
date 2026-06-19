@@ -3,16 +3,17 @@
 import { useCallback } from "react"
 import { useBuilderStore, selectCurrentPage } from "@/store/builderStore"
 import { registry } from "@/registry/index"
-import { PropSchema } from "@/types/builder"
+import { PageSchema, PropSchema } from "@/types/builder"
 
 interface PropEditorProps {
   propKey: string
   schema: PropSchema
   value: unknown
   onChange: (key: string, value: unknown) => void
+  pages: PageSchema[]
 }
 
-function PropEditor({ propKey, schema, value, onChange }: PropEditorProps) {
+function PropEditor({ propKey, schema, value, onChange, pages }: PropEditorProps) {
   const handleChange = useCallback(
     (val: unknown) => onChange(propKey, val),
     [propKey, onChange]
@@ -71,6 +72,35 @@ function PropEditor({ propKey, schema, value, onChange }: PropEditorProps) {
         >
           {schema.options?.map((opt) => (
             <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      )}
+      {schema.type === "toggle" && (
+        <div className="flex rounded-lg overflow-hidden border border-zinc-200">
+          {schema.options?.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => handleChange(opt)}
+              className={`flex-1 text-[11px] py-1.5 font-medium capitalize transition-colors ${
+                value === opt
+                  ? "bg-[#0068FF] text-white"
+                  : "bg-zinc-50 text-zinc-500 hover:bg-zinc-100"
+              }`}
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+      )}
+      {schema.type === "page-select" && (
+        <select
+          value={(value as string) ?? ""}
+          onChange={(e) => handleChange(e.target.value)}
+          className={`${inputBase} cursor-pointer`}
+        >
+          <option value="">— Không liên kết —</option>
+          {pages.map((p) => (
+            <option key={p.id} value={p.path}>{p.name} ({p.path})</option>
           ))}
         </select>
       )}
@@ -191,6 +221,7 @@ export function PropertiesPanel() {
   const selectedId = useBuilderStore((s) => s.selectedId)
   const currentPage = useBuilderStore(selectCurrentPage)
   const updateProp = useBuilderStore((s) => s.updateProp)
+  const pages = useBuilderStore((s) => s.pages)
 
   const nodes = currentPage?.nodes ?? {}
   const node = selectedId ? nodes[selectedId] : null
@@ -234,6 +265,7 @@ export function PropertiesPanel() {
             schema={schema}
             value={node.props[key]}
             onChange={handleChange}
+            pages={pages}
           />
         ))}
       </div>

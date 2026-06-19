@@ -145,7 +145,7 @@ export function LayersPanel() {
   const rootIds = currentPage?.rootIds ?? []
 
   return (
-    <div className="border-t border-[#1E1E24] bg-[#141417] flex flex-col flex-1 min-h-0">
+    <div className="border-t border-[#1E1E24] bg-[#141417] flex flex-col shrink-0 min-h-[160px] max-h-[40%] overflow-hidden">
       <div className="px-3 py-2 shrink-0">
         <p className="text-[9px] font-semibold text-zinc-600 uppercase tracking-[0.12em]">Layers</p>
       </div>

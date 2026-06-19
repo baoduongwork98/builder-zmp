@@ -4,9 +4,10 @@ import { useBuilderStore } from "@/store/builderStore"
 
 interface PhoneMockupProps {
   children: React.ReactNode
+  bottomNav?: React.ReactNode
 }
 
-export function PhoneMockup({ children }: PhoneMockupProps) {
+export function PhoneMockup({ children, bottomNav }: PhoneMockupProps) {
   const themeColor = useBuilderStore((s) => s.appConfig.themeColor)
 
   return (
@@ -25,7 +26,7 @@ export function PhoneMockup({ children }: PhoneMockupProps) {
       >
         {/* Screen */}
         <div
-          className="relative overflow-hidden bg-[#F4F4F4]"
+          className="relative overflow-hidden bg-[#F4F4F4] flex flex-col"
           style={{ borderRadius: 38, height: 700 }}
         >
           {/* Status bar */}
@@ -62,9 +63,16 @@ export function PhoneMockup({ children }: PhoneMockupProps) {
           </div>
 
           {/* Scrollable app content */}
-          <div className="absolute inset-0 top-11 bottom-0 overflow-y-auto overflow-x-hidden">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden">
             {children}
           </div>
+
+          {/* Bottom nav — pinned outside scroll, mirrors ZMPRouter placement */}
+          {bottomNav && (
+            <div className="shrink-0">
+              {bottomNav}
+            </div>
+          )}
         </div>
 
         {/* Physical buttons */}

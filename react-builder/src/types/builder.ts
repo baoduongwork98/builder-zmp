@@ -1,6 +1,6 @@
 import type React from "react"
 
-export type PropType = "string" | "number" | "boolean" | "color" | "select" | "textarea"
+export type PropType = "string" | "number" | "boolean" | "color" | "select" | "textarea" | "toggle" | "page-select"
 
 export interface PropSchema {
   label: string

@@ -168,7 +168,7 @@ export function ComponentPanel() {
 
   return (
     <>
-      <div className="w-52 border-r border-[#1E1E24] bg-[#141417] flex flex-col overflow-hidden">
+      <div className="border-r border-[#1E1E24] bg-[#141417] flex flex-col flex-1 min-h-0 overflow-hidden">
         {/* Header */}
         <div className="px-3 pt-3 pb-2.5 shrink-0">
           <p className="text-[9px] font-semibold text-zinc-600 uppercase tracking-[0.12em] mb-2">

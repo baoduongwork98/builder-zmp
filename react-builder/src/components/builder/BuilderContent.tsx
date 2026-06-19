@@ -64,7 +64,7 @@ export default function BuilderContent() {
         <Topbar />
         <div className="flex flex-1 overflow-hidden">
           {/* Left sidebar */}
-          <div className="flex flex-col w-52 shrink-0">
+          <div className="flex flex-col w-52 shrink-0 h-full overflow-hidden">
             <ComponentPanel />
             <LayersPanel />
           </div>
