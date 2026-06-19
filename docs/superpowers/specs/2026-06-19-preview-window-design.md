@@ -22,6 +22,7 @@ Khi user click **Preview** trong Topbar, mở một cửa sổ popup mới (`/pr
 | `react-builder/src/app/preview/page.tsx` | Next.js route `/preview` — page shell, mini-router, PhoneMockup |
 | `react-builder/src/components/preview/PreviewRenderer.tsx` | PreviewContext, PreviewNode, action executor |
 | `react-builder/src/lib/previewChannel.ts` | BroadcastChannel wrapper — send/receive snapshot |
+| `react-builder/src/lib/previewUtils.ts` | `findGlobalBottomNav` + `readFromLocalStorage` — shared utils |
 
 ### Chỉnh sửa
 
@@ -75,6 +76,20 @@ useBuilderStore.subscribe((state) => {
 
 ### Initial load trong preview
 Preview đọc state từ localStorage key `zmp-builder-store` (Zustand persist middleware đã lưu tại đây) khi mount lần đầu — không cần request network.
+
+```ts
+function readFromLocalStorage(): PreviewSnapshot | null {
+  try {
+    const raw = localStorage.getItem("zmp-builder-store")
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    const s = parsed?.state
+    return s ? { pages: s.pages, appConfig: s.appConfig, variables: s.variables ?? [], apis: s.apis ?? [] } : null
+  } catch {
+    return null
+  }
+}
+```
 
 ---
 
@@ -133,7 +148,20 @@ function PreviewNode({ id, nodes }: { id: string; nodes: Record<string, Componen
 ```
 
 ### BottomNav trong context
-Registry renderer của `ZaloBottomNav` nhận `currentPath` từ `PreviewContext` (qua `useContext`) để highlight tab active và gọi `navigate` khi click tab. Registry renderer cần được cập nhật để đọc context trong môi trường preview.
+Registry renderers là plain functions — không thể dùng `useContext` trực tiếp. Giải pháp: `PreviewNode` inject `__navigate__` và `__currentPath__` vào props khi render `ZaloBottomNav`:
+
+```tsx
+const isBottomNav = node.type === "ZaloBottomNav"
+const extraProps = isBottomNav
+  ? { __navigate__: navigate, __currentPath__: currentPath }
+  : {}
+
+def.renderer({ ...node.props, ...extraProps }, node, nodes, children)
+```
+
+Registry renderer của `ZaloBottomNav` kiểm tra `props.__navigate__` và `props.__currentPath__` — nếu có thì dùng cho active tab highlight và click handler. Nếu không có (canvas mode) thì render như cũ.
+
+`findGlobalBottomNav` được extract ra `src/lib/previewUtils.ts` (copy logic từ `Canvas.tsx`) để dùng chung giữa Canvas và preview page.
 
 ---
 
