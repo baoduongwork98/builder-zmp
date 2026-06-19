@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React from "react"
 import { nanoid } from "nanoid"
 import { ComponentNode } from "@/types/builder"
 import { useBuilderStore } from "@/store/builderStore"
@@ -1063,131 +1063,254 @@ type CategoryFilter = "all" | "ecommerce" | "auth" | "analytics" | "social" | "s
 
 export function TemplateModal({ onClose }: TemplateModalProps) {
   const loadTemplate = useBuilderStore((s) => s.loadTemplate)
-  const [hovered, setHovered] = useState<string | null>(null)
-  const [category, setCategory] = useState<CategoryFilter>("all")
+  const [hoveredId, setHoveredId] = React.useState<string | null>(null)
+  const [selectedId, setSelectedId] = React.useState<string>(TEMPLATES[0].id)
+  const [category, setCategory] = React.useState<CategoryFilter>("all")
+  const [search, setSearch] = React.useState("")
 
-  function handleSelect(template: Template) {
+  const filtered = TEMPLATES.filter((t) => {
+    const matchCategory = category === "all" || t.category === category
+    const q = search.toLowerCase()
+    const matchSearch = !q || t.name.toLowerCase().includes(q) || t.description.toLowerCase().includes(q)
+    return matchCategory && matchSearch
+  })
+
+  const previewId = hoveredId ?? selectedId
+  const previewTemplate = TEMPLATES.find((t) => t.id === previewId) ?? TEMPLATES[0]
+  const WireframeComponent = TEMPLATE_WIREFRAMES[previewTemplate.id]
+
+  function handleApply() {
+    const template = TEMPLATES.find((t) => t.id === selectedId)
+    if (!template) return
     const { nodes, rootIds } = template.build()
     loadTemplate(nodes, rootIds)
     onClose()
   }
 
-  const filtered = category === "all" ? TEMPLATES : TEMPLATES.filter((t) => t.category === category)
-
   const FILTER_TABS: { key: CategoryFilter; label: string }[] = [
     { key: "all", label: "Tất cả" },
-    { key: "ecommerce", label: "E-commerce" },
+    { key: "ecommerce", label: "E-com" },
     { key: "social", label: "Social" },
+    { key: "services", label: "Services" },
     { key: "auth", label: "Auth" },
     { key: "analytics", label: "Analytics" },
-    { key: "services", label: "Services" },
   ]
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)" }}
+      style={{ backgroundColor: "rgba(0,0,0,0.72)", backdropFilter: "blur(8px)", animation: "tmModalIn 180ms ease-out" }}
       onClick={onClose}
     >
+      <style>{`
+        @keyframes tmModalIn {
+          from { opacity: 0; transform: scale(0.95); }
+          to   { opacity: 1; transform: scale(1); }
+        }
+        @keyframes tmPreviewFade {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+        .tm-scrollbar-hide::-webkit-scrollbar { display: none; }
+        .tm-scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
+
       <div
-        className="bg-white rounded-2xl shadow-2xl w-[600px] max-h-[85vh] flex flex-col overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl flex overflow-hidden"
+        style={{ width: 880, maxHeight: "88vh" }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold text-zinc-800">Chọn template</h2>
-              <p className="text-[12px] text-zinc-400 mt-0.5">{TEMPLATES.length} layouts sẵn có — nhấn để áp dụng ngay</p>
-            </div>
-            <button onClick={onClose} className="text-zinc-400 hover:text-zinc-600 transition-colors p-1.5 rounded-lg hover:bg-zinc-100 mt-0.5">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-          {/* Category filter */}
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-            {FILTER_TABS.map(({ key, label }) => (
+        {/* ── Left panel ──────────────────────────────────────────────────── */}
+        <div className="flex flex-col border-r border-zinc-100 shrink-0" style={{ width: 280 }}>
+          {/* Header */}
+          <div className="px-4 pt-4 pb-3 border-b border-zinc-100 shrink-0">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-sm font-bold text-zinc-800">Chọn template</h2>
+                <p className="text-[11px] text-zinc-400 mt-0.5">{TEMPLATES.length} layouts sẵn có</p>
+              </div>
               <button
-                key={key}
-                onClick={() => setCategory(key)}
-                className={`shrink-0 text-[11px] font-semibold px-3 py-1 rounded-full border transition-all ${
-                  category === key
-                    ? "bg-[#0068FF] text-white border-[#0068FF]"
-                    : "text-zinc-500 border-zinc-200 hover:border-zinc-300 hover:text-zinc-700"
-                }`}
+                onClick={onClose}
+                className="text-zinc-400 hover:text-zinc-600 transition-colors p-1.5 rounded-lg hover:bg-zinc-100"
               >
-                {label}
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
               </button>
-            ))}
+            </div>
+
+            {/* Search */}
+            <div className="relative mb-2.5">
+              <svg
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none"
+                width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+              >
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Tìm kiếm template..."
+                className="w-full pl-7 pr-3 py-1.5 text-[12px] border border-zinc-200 rounded-lg bg-zinc-50 focus:outline-none focus:border-blue-400 focus:bg-white transition-colors placeholder:text-zinc-400"
+              />
+            </div>
+
+            {/* Category filter */}
+            <div className="flex gap-1 overflow-x-auto tm-scrollbar-hide">
+              {FILTER_TABS.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setCategory(key)}
+                  className={`shrink-0 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border transition-all ${
+                    category === key
+                      ? "bg-[#0068FF] text-white border-[#0068FF]"
+                      : "text-zinc-500 border-zinc-200 hover:border-zinc-300 hover:text-zinc-700"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Template list */}
+          <div className="overflow-y-auto flex-1 tm-scrollbar-hide py-1">
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-10 text-zinc-400">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mb-2">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <p className="text-[12px]">Không tìm thấy template</p>
+              </div>
+            ) : (
+              <>
+                {filtered.map((t) => (
+                  <button
+                    key={t.id}
+                    onClick={() => setSelectedId(t.id)}
+                    onMouseEnter={() => setHoveredId(t.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    className={`w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 ${
+                      selectedId === t.id
+                        ? "bg-blue-50 border-r-2 border-[#0068FF]"
+                        : "hover:bg-zinc-50 border-r-2 border-transparent"
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base shrink-0 transition-colors ${
+                      selectedId === t.id ? "bg-blue-100" : "bg-zinc-100"
+                    }`}>
+                      {t.emoji}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-[12px] font-semibold truncate mb-0.5 ${
+                        selectedId === t.id ? "text-[#0068FF]" : "text-zinc-700"
+                      }`}>
+                        {t.name}
+                      </div>
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${CATEGORY_COLORS[t.category]}`}>
+                        {CATEGORY_LABELS[t.category]}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+
+                {/* Blank canvas option */}
+                <button
+                  onClick={onClose}
+                  onMouseEnter={() => setHoveredId("blank")}
+                  onMouseLeave={() => setHoveredId(null)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-all duration-150 hover:bg-zinc-50 border-r-2 border-transparent"
+                >
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-zinc-100 shrink-0">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-zinc-400">
+                      <rect x="3" y="3" width="18" height="18" rx="2" />
+                      <line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <div className="text-[12px] font-semibold text-zinc-500 mb-0.5">Canvas trắng</div>
+                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded border text-zinc-400 bg-zinc-50 border-zinc-200">
+                      Custom
+                    </span>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Templates grid */}
-        <div className="overflow-y-auto flex-1 p-4 scrollbar-hide">
-          <div className="grid grid-cols-2 gap-3">
-            {filtered.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => handleSelect(t)}
-                onMouseEnter={() => setHovered(t.id)}
-                onMouseLeave={() => setHovered(null)}
-                className={`text-left p-4 rounded-xl border-2 transition-all duration-150 group ${
-                  hovered === t.id
-                    ? "border-[#0068FF] bg-blue-50/70 shadow-lg shadow-blue-100"
-                    : "border-zinc-100 hover:border-zinc-200 bg-white"
-                }`}
-              >
-                {/* Emoji + name + category */}
-                <div className="flex items-start gap-3 mb-2.5">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl shrink-0 transition-colors ${
-                    hovered === t.id ? "bg-[#0068FF]/10" : "bg-zinc-100"
-                  }`}>
-                    {t.emoji}
-                  </div>
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <div className="text-[13px] font-semibold text-zinc-800 mb-1 truncate">{t.name}</div>
-                    <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${CATEGORY_COLORS[t.category]}`}>
-                      {CATEGORY_LABELS[t.category]}
-                    </span>
-                  </div>
-                </div>
-                <div className="text-[11px] text-zinc-400 leading-relaxed">{t.description}</div>
-                {hovered === t.id && (
-                  <div className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#0068FF]">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                    Áp dụng template này
-                  </div>
-                )}
-              </button>
-            ))}
-
-            {/* Blank option */}
-            <button
-              onClick={onClose}
-              onMouseEnter={() => setHovered("blank")}
-              onMouseLeave={() => setHovered(null)}
-              className={`text-left p-4 rounded-xl border-2 border-dashed transition-all duration-150 ${
-                hovered === "blank" ? "border-zinc-400 bg-zinc-50" : "border-zinc-200 bg-white"
-              }`}
-            >
-              <div className="flex items-start gap-3 mb-2.5">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-zinc-100 shrink-0">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="text-zinc-400">
+        {/* ── Right panel ─────────────────────────────────────────────────── */}
+        <div className="flex flex-col flex-1 bg-zinc-50 min-w-0">
+          {/* Preview area */}
+          <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-hidden">
+            {hoveredId === "blank" || (!hoveredId && !selectedId) ? (
+              <div className="flex flex-col items-center gap-3 text-zinc-400">
+                <div className="w-16 h-16 rounded-2xl border-2 border-dashed border-zinc-300 flex items-center justify-center">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" />
                     <line x1="12" y1="8" x2="12" y2="16" /><line x1="8" y1="12" x2="16" y2="12" />
                   </svg>
                 </div>
-                <div className="pt-0.5">
-                  <div className="text-[13px] font-semibold text-zinc-500 mb-1">Canvas trắng</div>
-                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded border text-zinc-400 bg-zinc-50 border-zinc-200">Custom</span>
-                </div>
+                <p className="text-[13px] font-medium text-zinc-500">Canvas trắng</p>
+                <p className="text-[11px] text-zinc-400">Tự do thiết kế từ đầu</p>
               </div>
-              <div className="text-[11px] text-zinc-400 leading-relaxed">Tự do thiết kế từ trang rỗng</div>
-            </button>
+            ) : WireframeComponent ? (
+              <>
+                {/* Phone mockup */}
+                <div
+                  key={previewId}
+                  style={{
+                    width: 200,
+                    height: 380,
+                    borderRadius: 26,
+                    boxShadow: "0 0 0 7px #1F2937, 0 16px 40px rgba(0,0,0,0.28)",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                    animation: "tmPreviewFade 120ms ease-in-out",
+                    flexShrink: 0,
+                    background: "#fff",
+                  }}
+                >
+                  {/* Notch */}
+                  <div style={{ height: 18, background: "#1F2937", display: "flex", alignItems: "flex-end", justifyContent: "center", paddingBottom: 3, flexShrink: 0 }}>
+                    <div style={{ width: 52, height: 7, background: "#374151", borderRadius: 4 }} />
+                  </div>
+                  {/* Screen content */}
+                  <div style={{ flex: 1, overflow: "hidden", padding: 5 }}>
+                    <WireframeComponent />
+                  </div>
+                </div>
+
+                {/* Template info below mockup */}
+                <div className="mt-5 text-center">
+                  <h3 className="text-sm font-bold text-zinc-800 mb-1">{previewTemplate.name}</h3>
+                  <p className="text-[11px] text-zinc-500 leading-relaxed max-w-[260px]">
+                    {previewTemplate.description}
+                  </p>
+                </div>
+              </>
+            ) : null}
+          </div>
+
+          {/* Apply button */}
+          <div className="px-5 pb-5 pt-3 border-t border-zinc-200 bg-white shrink-0">
+            {hoveredId !== "blank" && selectedId ? (
+              <button
+                onClick={handleApply}
+                className="w-full py-2.5 bg-[#0068FF] text-white text-[13px] font-semibold rounded-xl hover:bg-[#0055D4] transition-all active:scale-[0.97] shadow-sm"
+              >
+                Áp dụng template này
+              </button>
+            ) : (
+              <button
+                onClick={onClose}
+                className="w-full py-2.5 bg-zinc-100 text-zinc-600 text-[13px] font-semibold rounded-xl hover:bg-zinc-200 transition-all"
+              >
+                Bắt đầu canvas trắng
+              </button>
+            )}
           </div>
         </div>
       </div>
