@@ -49,6 +49,7 @@ import {
   RiCheckboxCircleLine,
   RiCloseCircleLine,
   RiSlideshowLine,
+  RiLoader2Line,
 } from "react-icons/ri"
 import { ComponentDefinition } from "@/types/builder"
 
@@ -2210,6 +2211,124 @@ const carouselDef: ComponentDefinition = {
   },
 }
 
+// ─── Skeleton ─────────────────────────────────────────────────────────────────
+
+const skeletonDef: ComponentDefinition = {
+  type: "Skeleton",
+  label: "Skeleton",
+  icon: RiLoader2Line,
+  description: "Placeholder loading animation cho text, card, avatar hoặc list item",
+  category: "ui",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: { variant: "card", rows: 3, animated: true },
+  propSchema: {
+    variant: { label: "Kiểu", type: "select", defaultValue: "card", options: ["text", "card", "avatar-row", "list-item"] },
+    rows: { label: "Số dòng (text)", type: "number", defaultValue: 3 },
+    animated: { label: "Animation", type: "boolean", defaultValue: true },
+  },
+  renderer: (props) => {
+    const animated = props.animated as boolean
+    const cls = animated ? "animate-pulse" : ""
+    const gray = "#E5E7EB"
+
+    if (props.variant === "text") {
+      const rows = Math.max(1, props.rows as number)
+      return (
+        <div className={cls} style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {Array.from({ length: rows }).map((_, i) => (
+            <div key={i} style={{ height: 12, background: gray, borderRadius: 4, width: i === rows - 1 ? "60%" : "100%" }} />
+          ))}
+        </div>
+      )
+    }
+
+    if (props.variant === "avatar-row") {
+      return (
+        <div className={cls} style={{ display: "flex", alignItems: "center", gap: 12, padding: "8px 0" }}>
+          <div style={{ width: 48, height: 48, borderRadius: "50%", background: gray, flexShrink: 0 }} />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ height: 14, background: gray, borderRadius: 4, width: "70%" }} />
+            <div style={{ height: 12, background: gray, borderRadius: 4, width: "45%" }} />
+          </div>
+        </div>
+      )
+    }
+
+    if (props.variant === "list-item") {
+      return (
+        <div className={cls} style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", background: "white", borderRadius: 12, border: tk.border }}>
+          <div style={{ width: 40, height: 40, borderRadius: 10, background: gray, flexShrink: 0 }} />
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ height: 14, background: gray, borderRadius: 4, width: "75%" }} />
+            <div style={{ height: 12, background: gray, borderRadius: 4, width: "50%" }} />
+          </div>
+          <div style={{ width: 24, height: 24, borderRadius: 4, background: gray, flexShrink: 0 }} />
+        </div>
+      )
+    }
+
+    // card (default)
+    return (
+      <div className={cls} style={{ borderRadius: 12, overflow: "hidden", border: tk.border }}>
+        <div style={{ height: 160, background: gray }} />
+        <div style={{ padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+          <div style={{ height: 14, background: gray, borderRadius: 4, width: "80%" }} />
+          <div style={{ height: 12, background: gray, borderRadius: 4, width: "50%" }} />
+        </div>
+      </div>
+    )
+  },
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+    const animCls = (props.animated as boolean) ? " animate-pulse" : ""
+    const rows = Math.max(1, props.rows as number)
+
+    if (props.variant === "text") {
+      const rowDivs = Array.from({ length: rows }).map((_, i) =>
+        `${i1}<div className="h-3 bg-gray-200 rounded${i === rows - 1 ? " w-3/5" : " w-full"}" />`
+      ).join("\n")
+      return `${i0}<div className="flex flex-col gap-2${animCls}">\n${rowDivs}\n${i0}</div>`
+    }
+
+    if (props.variant === "avatar-row") {
+      return [
+        `${i0}<div className="flex items-center gap-3 py-2${animCls}">`,
+        `${i1}<div className="w-12 h-12 rounded-full bg-gray-200 shrink-0" />`,
+        `${i1}<div className="flex-1 flex flex-col gap-2">`,
+        `${i2}<div className="h-3.5 bg-gray-200 rounded w-3/4" />`,
+        `${i2}<div className="h-3 bg-gray-200 rounded w-2/5" />`,
+        `${i1}</div>`,
+        `${i0}</div>`,
+      ].join("\n")
+    }
+
+    if (props.variant === "list-item") {
+      return [
+        `${i0}<div className="flex items-center gap-3 px-4 py-3 bg-white rounded-xl border border-black/5${animCls}">`,
+        `${i1}<div className="w-10 h-10 rounded-lg bg-gray-200 shrink-0" />`,
+        `${i1}<div className="flex-1 flex flex-col gap-2">`,
+        `${i2}<div className="h-3.5 bg-gray-200 rounded w-3/4" />`,
+        `${i2}<div className="h-3 bg-gray-200 rounded w-1/2" />`,
+        `${i1}</div>`,
+        `${i1}<div className="w-6 h-6 rounded bg-gray-200 shrink-0" />`,
+        `${i0}</div>`,
+      ].join("\n")
+    }
+
+    // card
+    return [
+      `${i0}<div className="rounded-xl overflow-hidden border border-black/5${animCls}">`,
+      `${i1}<div className="h-40 bg-gray-200" />`,
+      `${i1}<div className="p-4 flex flex-col gap-2">`,
+      `${i2}<div className="h-3.5 bg-gray-200 rounded w-4/5" />`,
+      `${i2}<div className="h-3 bg-gray-200 rounded w-1/2" />`,
+      `${i1}</div>`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
+}
+
 // ─── Registry exports ─────────────────────────────────────────────────────────
 
 export const registry: Record<string, ComponentDefinition> = {
@@ -2248,6 +2367,7 @@ export const registry: Record<string, ComponentDefinition> = {
   Tabs: tabsDef,
   SelectField: selectFieldDef,
   Carousel: carouselDef,
+  Skeleton: skeletonDef,
   BottomSheet: bottomSheetDef,
   ModalCard: modalCardDef,
 }
