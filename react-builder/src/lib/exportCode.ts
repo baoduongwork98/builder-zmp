@@ -113,7 +113,7 @@ function nodeToJSX(id: string, nodes: Record<string, ComponentNode>, level: numb
   // Prefer the component's own toJSX for accurate prop mapping
   if (def.toJSX) {
     // Pass event props via a special wrapper when the component has events
-    const base = def.toJSX(node.props, renderChildren, level)
+    const base = def.toJSX(node.props, renderChildren, level, id)
     if (!evtProps) return base
     // Inject event props into the first opening tag
     return base.replace(/^(\s*<\w+)/, `$1${evtProps}`)
@@ -242,15 +242,19 @@ function findBottomNavProps(pages: PageSchema[]): Record<string, unknown> | null
 }
 
 function generateBottomNavFile(props: Record<string, unknown>): string {
+  const tabCount = parseInt((props.tabCount as string) ?? "3")
   const tabs = [
     { key: "1", label: (props.tab1Label as string) ?? "", icon: (props.tab1Icon as string) ?? "", route: (props.tab1Route as string) ?? "" },
     { key: "2", label: (props.tab2Label as string) ?? "", icon: (props.tab2Icon as string) ?? "", route: (props.tab2Route as string) ?? "" },
     { key: "3", label: (props.tab3Label as string) ?? "", icon: (props.tab3Icon as string) ?? "", route: (props.tab3Route as string) ?? "" },
-  ].filter((tab) => tab.label || tab.icon || tab.route)
+    { key: "4", label: (props.tab4Label as string) ?? "", icon: (props.tab4Icon as string) ?? "", route: (props.tab4Route as string) ?? "" },
+    { key: "5", label: (props.tab5Label as string) ?? "", icon: (props.tab5Icon as string) ?? "", route: (props.tab5Route as string) ?? "" },
+  ].slice(0, tabCount).filter((tab) => tab.label || tab.icon || tab.route)
 
   const tabsJson = JSON.stringify(tabs, null, 2)
 
   return `import { useNavigate } from "zmp-ui"
+import { useState, useEffect } from "react"
 import { RiHomeLine, RiSearchLine, RiUserLine, RiStarLine, RiShoppingCartLine, RiHeartLine, RiSettings3Line } from "react-icons/ri"
 
 const iconMap = {
@@ -267,19 +271,37 @@ const tabs = ${tabsJson}
 
 export default function BottomNavigation() {
   const navigate = useNavigate()
+  const [activePath, setActivePath] = useState(tabs[0]?.route ?? "/")
+
+  useEffect(() => {
+    setActivePath(window.location.pathname)
+  }, [])
+
+  function handleTab(route: string) {
+    if (!route) return
+    setActivePath(route)
+    navigate(route)
+  }
 
   return (
-    <div className="fixed bottom-0 left-0 w-full flex items-center justify-around bg-white border-t border-gray-200 h-14 px-2 shrink-0">
+    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 60, display: "flex", alignItems: "stretch", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,0,0,0.06)", zIndex: 50 }}>
       {tabs.map((tab) => {
+        const isActive = activePath === tab.route
         const IconComp = iconMap[tab.icon as keyof typeof iconMap]
         return (
           <button
             key={tab.key}
-            className="flex flex-col items-center gap-0.5 flex-1"
-            onClick={() => { if (tab.route) navigate(tab.route) }}
+            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, position: "relative", border: "none", background: "none", cursor: "pointer", padding: 0 }}
+            onClick={() => handleTab(tab.route)}
           >
-            {IconComp ? <IconComp style={{ fontSize: 22, color: "#6B7280" }} /> : <span className="text-xl leading-none">{tab.icon}</span>}
-            <span className="text-[10px] font-medium text-gray-500">{tab.label}</span>
+            {isActive && (
+              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 24, height: 3, borderRadius: 3, background: "#0068FF" }} />
+            )}
+            {IconComp
+              ? <IconComp style={{ fontSize: 22, color: isActive ? "#0068FF" : "#9CA3AF", transition: "color 0.15s" }} />
+              : <span style={{ fontSize: 20, lineHeight: 1 }}>{tab.icon}</span>
+            }
+            <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 500, color: isActive ? "#0068FF" : "#9CA3AF", transition: "color 0.15s" }}>{tab.label}</span>
           </button>
         )
       })}
@@ -799,7 +821,7 @@ function nodeToJSXWithBindings(
   // Generate JSX string
   let jsx: string
   if (def.toJSX) {
-    const base = def.toJSX(resolvedProps, renderChildren, level)
+    const base = def.toJSX(resolvedProps, renderChildren, level, id)
     jsx = evtProps ? base.replace(/^(\s*<\w+)/, `$1${evtProps}`) : base
   } else {
     const comp = def.zmpComponent ?? def.type
@@ -883,6 +905,39 @@ export function exportToZMP({ pages, appConfig, variables = [], apis = [] }: Exp
   return files
 }
 
+// ─── Local React hooks collector (useState for Tabs, etc.) ───────────────────
+
+function collectLocalHooks(
+  nodes: Record<string, ComponentNode>,
+  rootIds: string[]
+): { lines: string[]; needsUseState: boolean } {
+  const lines: string[] = []
+  let needsUseState = false
+
+  const walk = (id: string) => {
+    const node = nodes[id]
+    if (!node) return
+    if (node.type === "Tabs") {
+      const safeId = id.replace(/[^a-zA-Z0-9]/g, "_")
+      const varName = `activeTab_${safeId}`
+      const setter = `set${varName.charAt(0).toUpperCase()}${varName.slice(1)}`
+      lines.push(`const [${varName}, ${setter}] = useState(${JSON.stringify(node.props.activeTab ?? "1")})`)
+      needsUseState = true
+    }
+    if (node.type === "Accordion") {
+      const safeId = id.replace(/[^a-zA-Z0-9]/g, "_")
+      const stateVar = `isAccordion_${safeId}_Open`
+      const setter = `set${stateVar.charAt(0).toUpperCase()}${stateVar.slice(1)}`
+      lines.push(`const [${stateVar}, ${setter}] = useState(${JSON.stringify(node.props.defaultOpen ?? false)})`)
+      needsUseState = true
+    }
+    node.children.forEach(walk)
+  }
+  rootIds.forEach(walk)
+
+  return { lines, needsUseState }
+}
+
 // ─── Page file generator with bindings ───────────────────────────────────────
 
 function generatePageFileWithBindings(
@@ -897,6 +952,7 @@ function generatePageFileWithBindings(
   const { atomImports, apiImports, setters } = collectPageStateImports(
     page.nodes, page.rootIds, variables, page.id, apis
   )
+  const { lines: localHookLines, needsUseState } = collectLocalHooks(page.nodes, page.rootIds)
 
   const bodyLines = page.rootIds
     .map((id) => nodeToJSXWithBindings(id, page.nodes, rootLevel, variables))
@@ -923,6 +979,7 @@ function generatePageFileWithBindings(
     ? Array.from(new Set(["useNavigate", ...zmpBaseImports])).sort()
     : zmpBaseImports
 
+  const reactImportLine = needsUseState ? `import { useState } from "react"\n` : ""
   const zmpImportLine = allZmpImports.length ? `import { ${allZmpImports.join(", ")} } from "zmp-ui"\n` : ""
   const sdkImportLine = sdkImports.length ? `import { ${sdkImports.join(", ")} } from "zmp-sdk"\n` : ""
   const atomImportLine = atomImports.length ? `import { ${atomImports.join(", ")} } from "@/state/variables"\n` : ""
@@ -931,9 +988,10 @@ function generatePageFileWithBindings(
 
   const navigateHook = needsNavigate ? "\n  const navigate = useNavigate()" : ""
   const setterLines = setters.length ? "\n  " + setters.join("\n  ") : ""
+  const localHooks = localHookLines.length ? "\n  " + localHookLines.join("\n  ") : ""
   const asyncNote = needsAsync ? "  // API calls use async handlers — attach to onClick/onChange events\n" : ""
 
-  const hookBlock = `${navigateHook}${setterLines}`
+  const hookBlock = `${navigateHook}${setterLines}${localHooks}`
 
   const body = bodyLines || (hasPageRoot ? `    {/* Chưa có nội dung */}` : `      {/* Chưa có nội dung */}`)
 
@@ -941,7 +999,7 @@ function generatePageFileWithBindings(
     const needsFragment = page.rootIds.length > 1
     const indentedBody = needsFragment ? body.split("\n").map((l) => `  ${l}`).join("\n") : body
     const returnContent = needsFragment ? `    <>\n${indentedBody}\n    </>` : body
-    return `${zmpImportLine}${sdkImportLine}${useAtomImportLine}${atomImportLine}${apiImportLine}
+    return `${reactImportLine}${zmpImportLine}${sdkImportLine}${useAtomImportLine}${atomImportLine}${apiImportLine}
 export default function ${componentName}() {${hookBlock}
 ${asyncNote}  return (
 ${returnContent}
@@ -950,7 +1008,7 @@ ${returnContent}
 `
   }
 
-  return `${zmpImportLine}${sdkImportLine}${useAtomImportLine}${atomImportLine}${apiImportLine}
+  return `${reactImportLine}${zmpImportLine}${sdkImportLine}${useAtomImportLine}${atomImportLine}${apiImportLine}
 export default function ${componentName}() {${hookBlock}
 ${asyncNote}  return (
     <Page>

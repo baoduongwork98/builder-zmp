@@ -2329,6 +2329,113 @@ const skeletonDef: ComponentDefinition = {
   },
 }
 
+// ─── Accordion ────────────────────────────────────────────────────────────────
+
+const accordionDef: ComponentDefinition = {
+  type: "Accordion",
+  label: "Accordion",
+  icon: RiArrowDownSLine,
+  description: "Phần nội dung có thể mở rộng / thu gọn — kéo component vào bên trong",
+  category: "ui",
+  acceptsChildren: true,
+  zmpImports: [],
+  defaultProps: { title: "Tiêu đề mục", subtitle: "", defaultOpen: false, bordered: true, chevron: true },
+  propSchema: {
+    title:       { label: "Tiêu đề",        type: "string",  defaultValue: "Tiêu đề mục" },
+    subtitle:    { label: "Mô tả phụ",      type: "string",  defaultValue: "" },
+    defaultOpen: { label: "Mặc định mở",    type: "boolean", defaultValue: false },
+    bordered:    { label: "Viền",           type: "boolean", defaultValue: true },
+    chevron:     { label: "Hiện mũi tên",  type: "boolean", defaultValue: true },
+  },
+  renderer: (props, children) => {
+    const isOpen = props.defaultOpen as boolean
+    return (
+      <div style={{ borderRadius: 12, border: (props.bordered as boolean) ? tk.border : "none", overflow: "hidden" }}>
+        <div
+          className="flex items-center justify-between bg-white"
+          style={{ padding: "14px 16px", cursor: "pointer" }}
+        >
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: tk.textPrimary, display: "block" }}>
+              {props.title as string}
+            </span>
+            {(props.subtitle as string) && (
+              <span style={{ display: "block", fontSize: 12, color: tk.textSecondary, marginTop: 2 }}>
+                {props.subtitle as string}
+              </span>
+            )}
+          </div>
+          {(props.chevron as boolean) && (
+            <svg
+              style={{ transform: isOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }}
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={tk.textTertiary} strokeWidth="2"
+            >
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          )}
+        </div>
+        {isOpen ? (
+          <div style={{ padding: "0 16px 16px", borderTop: "1px solid #F3F4F6" }}>
+            {children ?? (
+              <div
+                className="flex items-center justify-center py-4 text-xs rounded-lg"
+                style={{ border: "2px dashed rgba(0,104,255,0.2)", color: "rgba(0,104,255,0.4)" }}
+              >
+                Thả component vào đây
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ padding: "0 16px 8px" }}>
+            <div
+              className="flex items-center justify-center py-3 text-xs rounded-lg"
+              style={{ border: "2px dashed rgba(0,104,255,0.1)", color: "rgba(0,104,255,0.3)" }}
+            >
+              Nội dung (mặc định ẩn)
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  },
+  toJSX: (props, renderChildren, level, nodeId) => {
+    const safeId = (nodeId ?? `a${level}`).replace(/[^a-zA-Z0-9]/g, "_")
+    const stateVar = `isAccordion_${safeId}_Open`
+    const setter = `set${stateVar.charAt(0).toUpperCase()}${stateVar.slice(1)}`
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2), i3 = ind(level + 3)
+
+    const wrapStyle = (props.bordered as boolean)
+      ? `{{ borderRadius: 12, border: "1px solid rgba(0,0,0,0.06)", overflow: "hidden" }}`
+      : `{{ borderRadius: 12, overflow: "hidden" }}`
+
+    const subtitle = (props.subtitle as string)
+      ? `\n${i3}<span style={{ display: "block", fontSize: 12, color: "#6B7280", marginTop: 2 }}>${props.subtitle}</span>`
+      : ""
+
+    const chevron = (props.chevron as boolean)
+      ? `\n${i2}<svg style={{ transform: ${stateVar} ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s", flexShrink: 0 }} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>`
+      : ""
+
+    const children = renderChildren(level + 3)
+    const childContent = children || `${i3}{/* Nội dung accordion */}`
+
+    return [
+      `${i0}<div style=${wrapStyle}>`,
+      `${i1}<button onClick={() => ${setter}(!${stateVar})} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "white", border: "none", cursor: "pointer", textAlign: "left" }}>`,
+      `${i2}<div style={{ flex: 1, minWidth: 0 }}>`,
+      `${i3}<span style={{ fontWeight: 600, fontSize: 14, color: "#111827" }}>${props.title}</span>${subtitle}`,
+      `${i2}</div>${chevron}`,
+      `${i1}</button>`,
+      `${i1}{${stateVar} && (`,
+      `${i2}<div style={{ padding: "0 16px 16px", borderTop: "1px solid #F3F4F6" }}>`,
+      childContent,
+      `${i2}</div>`,
+      `${i1})}`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
+}
+
 // ─── Registry exports ─────────────────────────────────────────────────────────
 
 export const registry: Record<string, ComponentDefinition> = {
@@ -2368,6 +2475,7 @@ export const registry: Record<string, ComponentDefinition> = {
   SelectField: selectFieldDef,
   Carousel: carouselDef,
   Skeleton: skeletonDef,
+  Accordion: accordionDef,
   BottomSheet: bottomSheetDef,
   ModalCard: modalCardDef,
 }
