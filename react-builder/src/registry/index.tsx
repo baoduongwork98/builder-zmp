@@ -48,6 +48,7 @@ import {
   RiInformationLine,
   RiCheckboxCircleLine,
   RiCloseCircleLine,
+  RiSlideshowLine,
 } from "react-icons/ri"
 import { ComponentDefinition } from "@/types/builder"
 
@@ -200,14 +201,22 @@ const stackDef: ComponentDefinition = {
     )
   },
   toJSX: (props, renderChildren, level) => {
-    const direction = props.direction === "horizontal" ? "flex-row" : "flex-col"
-    const className = `flex ${direction} gap-${props.gap} items-${props.align} p-${props.padding}`
+    const isH = props.direction === "horizontal"
+    const gapMap: Record<string, string> = { "0": "0", "1": "4px", "2": "8px", "3": "12px", "4": "16px", "6": "24px", "8": "32px", "12": "48px" }
+    const padMap: Record<string, string> = { "0": "0", "2": "8px", "4": "16px", "6": "24px", "8": "32px" }
+    const styles: string[] = [
+      `flexDirection: "${isH ? "row" : "column"}"`,
+      `flexWrap: "nowrap"`,
+      `gap: "${gapMap[props.gap as string] ?? "16px"}"`,
+      `alignItems: "${props.align}"`,
+      `padding: "${padMap[props.padding as string] ?? "0"}"`,
+    ]
+    if (isH) styles.push(`overflowX: "auto"`, `overflowY: "hidden"`)
+    if (props.background && (props.background as string) !== "transparent") styles.push(`background: "${props.background}"`)
+    const styleStr = `{{ display: "flex", ${styles.join(", ")} }}`
     const children = renderChildren(level + 1)
-    const styleAttr = props.background && props.background !== "transparent"
-      ? ` style={{ background: "${props.background}" }}`
-      : ""
-    if (!children) return `${ind(level)}<Box className="${className}"${styleAttr} />`
-    return `${ind(level)}<Box className="${className}"${styleAttr}>\n${children}\n${ind(level)}</Box>`
+    if (!children) return `${ind(level)}<div style=${styleStr} />`
+    return `${ind(level)}<div style=${styleStr}>\n${children}\n${ind(level)}</div>`
   },
 }
 
@@ -392,18 +401,22 @@ const zaloBottomNavDef: ComponentDefinition = {
   type: "ZaloBottomNav",
   label: "BottomNav",
   icon: RiApps2Line,
-  description: "Thanh điều hướng dưới cùng với tối đa 3 tab — có thể gán route cho từng tab",
+  description: "Thanh điều hướng dưới cùng với tối đa 5 tab — có thể gán route cho từng tab",
   category: "zalo",
   acceptsChildren: false,
   zmpComponent: "BottomNavigation",
   zmpImports: ["BottomNavigation"],
   defaultProps: {
+    tabCount: "3",
     tab1Label: "Trang chủ", tab1Icon: "🏠", tab1Route: "/",
     tab2Label: "Tìm kiếm", tab2Icon: "🔍", tab2Route: "",
     tab3Label: "Tài khoản", tab3Icon: "👤", tab3Route: "",
+    tab4Label: "", tab4Icon: "⭐", tab4Route: "",
+    tab5Label: "", tab5Icon: "🛒", tab5Route: "",
     activeTab: "1",
   },
   propSchema: {
+    tabCount: { label: "Số tab", type: "select", defaultValue: "3", options: ["2", "3", "4", "5"] },
     tab1Icon: { label: "Tab 1 icon", type: "string", defaultValue: "🏠" },
     tab1Label: { label: "Tab 1 label", type: "string", defaultValue: "Trang chủ" },
     tab1Route: { label: "Tab 1 → Trang", type: "page-select", defaultValue: "/" },
@@ -413,17 +426,27 @@ const zaloBottomNavDef: ComponentDefinition = {
     tab3Icon: { label: "Tab 3 icon", type: "string", defaultValue: "👤" },
     tab3Label: { label: "Tab 3 label", type: "string", defaultValue: "Tài khoản" },
     tab3Route: { label: "Tab 3 → Trang", type: "page-select", defaultValue: "" },
-    activeTab: { label: "Tab active", type: "select", defaultValue: "1", options: ["1", "2", "3"] },
+    tab4Icon: { label: "Tab 4 icon", type: "string", defaultValue: "⭐" },
+    tab4Label: { label: "Tab 4 label", type: "string", defaultValue: "" },
+    tab4Route: { label: "Tab 4 → Trang", type: "page-select", defaultValue: "" },
+    tab5Icon: { label: "Tab 5 icon", type: "string", defaultValue: "🛒" },
+    tab5Label: { label: "Tab 5 label", type: "string", defaultValue: "" },
+    tab5Route: { label: "Tab 5 → Trang", type: "page-select", defaultValue: "" },
+    activeTab: { label: "Tab active", type: "select", defaultValue: "1", options: ["1", "2", "3", "4", "5"] },
   },
   renderer: (props) => {
     const navigate = props.__navigate__ as ((path: string) => void) | undefined
     const currentPath = props.__currentPath__ as string | undefined
+    const tabCount = parseInt((props.tabCount as string) ?? "3")
 
-    const tabs = [
+    const allTabs = [
       { icon: props.tab1Icon as string, label: props.tab1Label as string, key: "1", route: (props.tab1Route as string) ?? "" },
       { icon: props.tab2Icon as string, label: props.tab2Label as string, key: "2", route: (props.tab2Route as string) ?? "" },
       { icon: props.tab3Icon as string, label: props.tab3Label as string, key: "3", route: (props.tab3Route as string) ?? "" },
+      { icon: props.tab4Icon as string, label: props.tab4Label as string, key: "4", route: (props.tab4Route as string) ?? "" },
+      { icon: props.tab5Icon as string, label: props.tab5Label as string, key: "5", route: (props.tab5Route as string) ?? "" },
     ]
+    const tabs = allTabs.slice(0, tabCount)
 
     return (
       <div
@@ -482,17 +505,58 @@ const zaloBottomNavDef: ComponentDefinition = {
       </div>
     )
   },
+  propGroups: [
+    {
+      label: "Tab 1",
+      keys: ["tab1Icon", "tab1Label", "tab1Route"],
+      defaultExpanded: true,
+      preview: (props) => `${props.tab1Icon as string} ${props.tab1Label as string}`,
+    },
+    {
+      label: "Tab 2",
+      keys: ["tab2Icon", "tab2Label", "tab2Route"],
+      defaultExpanded: false,
+      preview: (props) => `${props.tab2Icon as string} ${props.tab2Label as string}`,
+    },
+    {
+      label: "Tab 3",
+      keys: ["tab3Icon", "tab3Label", "tab3Route"],
+      defaultExpanded: false,
+      preview: (props) => `${props.tab3Icon as string} ${props.tab3Label as string}`,
+      showWhen: (props) => parseInt(props.tabCount as string) >= 3,
+    },
+    {
+      label: "Tab 4",
+      keys: ["tab4Icon", "tab4Label", "tab4Route"],
+      defaultExpanded: false,
+      preview: (props) => `${(props.tab4Icon as string) || "⭐"} ${(props.tab4Label as string) || "Tab 4"}`,
+      showWhen: (props) => parseInt(props.tabCount as string) >= 4,
+    },
+    {
+      label: "Tab 5",
+      keys: ["tab5Icon", "tab5Label", "tab5Route"],
+      defaultExpanded: false,
+      preview: (props) => `${(props.tab5Icon as string) || "🛒"} ${(props.tab5Label as string) || "Tab 5"}`,
+      showWhen: (props) => parseInt(props.tabCount as string) >= 5,
+    },
+  ],
   // BottomNavigation.Item with onClick navigate when routes are set
   toJSX: (props, _renderChildren, level) => {
+    const tabCount = parseInt((props.tabCount as string) ?? "3")
+    const allTabs = [
+      { label: props.tab1Label as string, key: "1", route: (props.tab1Route as string) ?? "" },
+      { label: props.tab2Label as string, key: "2", route: (props.tab2Route as string) ?? "" },
+      { label: props.tab3Label as string, key: "3", route: (props.tab3Route as string) ?? "" },
+      { label: props.tab4Label as string, key: "4", route: (props.tab4Route as string) ?? "" },
+      { label: props.tab5Label as string, key: "5", route: (props.tab5Route as string) ?? "" },
+    ]
     const item = (label: string, key: string, route: string) => {
       const onClick = route ? ` onClick={() => navigate("${route}")}` : ""
       return `${ind(level + 1)}<BottomNavigation.Item label="${label}" itemKey="${key}"${onClick} />`
     }
     return [
       `${ind(level)}<BottomNavigation activeKey="${props.activeTab}">`,
-      item(props.tab1Label as string, "1", (props.tab1Route as string) ?? ""),
-      item(props.tab2Label as string, "2", (props.tab2Route as string) ?? ""),
-      item(props.tab3Label as string, "3", (props.tab3Route as string) ?? ""),
+      ...allTabs.slice(0, tabCount).map((t) => item(t.label, t.key, t.route)),
       `${ind(level)}</BottomNavigation>`,
     ].join("\n")
   },
@@ -769,7 +833,7 @@ const zaloSearchBarDef: ComponentDefinition = {
   description: "Thanh tìm kiếm với placeholder tùy chỉnh",
   category: "zalo",
   acceptsChildren: false,
-  zmpImports: ["Input"],
+  zmpImports: [],
   defaultProps: { placeholder: "Tìm kiếm..." },
   propSchema: {
     placeholder: { label: "Placeholder", type: "string", defaultValue: "Tìm kiếm..." },
@@ -787,8 +851,15 @@ const zaloSearchBarDef: ComponentDefinition = {
       />
     </div>
   ),
-  toJSX: (props, _renderChildren, level) =>
-    `${ind(level)}<Input.Search placeholder="${props.placeholder}" />`,
+  toJSX: (props, _renderChildren, level) => {
+    const i0 = ind(level), i1 = ind(level + 1)
+    return [
+      `${i0}<div style={{ position: "relative" }}>`,
+      `${i1}<svg style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#9CA3AF" }} width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>`,
+      `${i1}<input type="text" placeholder="${props.placeholder}" style={{ width: "100%", height: 40, paddingLeft: 36, paddingRight: 12, borderRadius: 10, border: "none", background: "rgba(0,0,0,0.05)", fontSize: 14, outline: "none" }} />`,
+      `${i0}</div>`,
+    ].join("\n")
+  },
 }
 
 const zaloSectionDef: ComponentDefinition = {
@@ -926,11 +997,12 @@ const gridDef: ComponentDefinition = {
     </div>
   ),
   toJSX: (props, renderChildren, level) => {
-    const style = `gridTemplateColumns: "repeat(${props.columns}, minmax(0, 1fr))"`
-    const className = `grid gap-${props.gap} p-${props.padding}`
+    const gapMap: Record<string, string> = { "2": "8px", "3": "12px", "4": "16px", "6": "24px" }
+    const padMap: Record<string, string> = { "0": "0", "2": "8px", "3": "12px", "4": "16px", "6": "24px" }
+    const styleStr = `{{ display: "grid", gridTemplateColumns: "repeat(${props.columns}, minmax(0, 1fr))", gap: "${gapMap[props.gap as string] ?? "16px"}", padding: "${padMap[props.padding as string] ?? "0"}" }}`
     const children = renderChildren(level + 1)
-    if (!children) return `${ind(level)}<div className="${className}" style={{ ${style} }} />`
-    return `${ind(level)}<div className="${className}" style={{ ${style} }}>\n${children}\n${ind(level)}</div>`
+    if (!children) return `${ind(level)}<div style=${styleStr} />`
+    return `${ind(level)}<div style=${styleStr}>\n${children}\n${ind(level)}</div>`
   },
 }
 
@@ -1103,20 +1175,23 @@ const switchDef: ComponentDefinition = {
   ),
   toJSX: (props, _renderChildren, level) => {
     const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
-    const bgColor = props.checked ? "#0068FF" : "#d1d5db"
-    const translateX = props.checked ? "translate-x-5" : "translate-x-0.5"
+    const checkedAttr = typeof props.checked === "boolean"
+      ? `{${props.checked}}`
+      : `"${props.checked}"`
     const desc = (props.description as string)
-      ? `\n${i2}<span className="text-xs text-gray-500 mt-0.5">${props.description}</span>`
+      ? `\n${i2}<span style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>${props.description}</span>`
       : ""
     return [
-      `${i0}<div className="flex items-center justify-between gap-3 py-2">`,
-      `${i1}<div className="flex flex-col min-w-0">`,
-      `${i2}<span className="text-sm font-medium text-gray-900">${props.label}</span>${desc}`,
+      `${i0}<label style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, paddingTop: 8, paddingBottom: 8, cursor: "pointer" }}>`,
+      `${i1}<div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>`,
+      `${i2}<span style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>${props.label}</span>${desc}`,
       `${i1}</div>`,
-      `${i1}<div className="relative w-11 h-6 rounded-full shrink-0" style={{ backgroundColor: "${bgColor}" }}>`,
-      `${i2}<div className="absolute top-0.5 w-5 h-5 bg-white rounded-full shadow ${translateX}" />`,
+      `${i1}<div style={{ position: "relative", display: "inline-flex", flexShrink: 0, width: 44, height: 24 }}>`,
+      `${i2}<input type="checkbox" className="sr-only peer" defaultChecked=${checkedAttr} />`,
+      `${i2}<div style={{ position: "absolute", inset: 0, borderRadius: 12, background: "#D1D5DB", transition: "background 0.2s" }} className="peer-checked:!bg-[#0068FF]" />`,
+      `${i2}<div style={{ position: "absolute", top: 2, left: 2, width: 20, height: 20, background: "white", borderRadius: "50%", boxShadow: "0 1px 3px rgba(0,0,0,0.2)", transition: "transform 0.2s" }} className="peer-checked:translate-x-[22px]" />`,
       `${i1}</div>`,
-      `${i0}</div>`,
+      `${i0}</label>`,
     ].join("\n")
   },
 }
@@ -1211,8 +1286,15 @@ const textareaDef: ComponentDefinition = {
     </div>
   ),
   toJSX: (props, _renderChildren, level) => {
-    const req = props.required ? " required" : ""
-    return `${ind(level)}<textarea rows={${props.rows}} placeholder="${props.placeholder}" className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm outline-none resize-none"${req} />`
+    const i0 = ind(level), i1 = ind(level + 1)
+    const req = props.required ? ` required` : ""
+    const label = (props.label as string) ?? ""
+    return [
+      `${i0}<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>`,
+      `${i1}<label style={{ fontSize: 13, fontWeight: 500, color: "#6B7280" }}>${label}</label>`,
+      `${i1}<textarea rows={${props.rows}} placeholder="${props.placeholder}" style={{ width: "100%", borderRadius: 10, border: "1px solid #E5E7EB", padding: "10px 14px", fontSize: 14, outline: "none", resize: "none", fontFamily: "inherit" }}${req} />`,
+      `${i0}</div>`,
+    ].join("\n")
   },
 }
 
@@ -1255,9 +1337,10 @@ const chipDef: ComponentDefinition = {
     </button>
   ),
   toJSX: (props, _renderChildren, level) => {
-    const className = `inline-flex items-center rounded-full px-4 py-1.5 text-sm font-medium border ${props.active ? "text-white border-transparent" : "bg-white text-gray-600 border-gray-200"}`
-    const styleAttr = props.active ? ` style={{ backgroundColor: "${props.color}", borderColor: "${props.color}" }}` : ""
-    return `${ind(level)}<button className="${className}"${styleAttr}>${props.label}</button>`
+    const activeStyle = `background: "linear-gradient(135deg, #0068FF, #0084FF)", color: "white", boxShadow: "0 4px 12px rgba(0,104,255,0.28)"`
+    const inactiveStyle = `background: "rgba(0,0,0,0.06)", color: "#6B7280"`
+    const styleStr = `{{ borderRadius: 9999, padding: "5px 14px", fontSize: 13, whiteSpace: "nowrap", lineHeight: 1.25, border: "none", cursor: "pointer", ${(props.active as boolean) ? activeStyle : inactiveStyle} }}`
+    return `${ind(level)}<button style=${styleStr}>${props.label}</button>`
   },
 }
 
@@ -1346,33 +1429,33 @@ const productCardDef: ComponentDefinition = {
     </div>
   ),
   toJSX: (props, _renderChildren, level) => {
-    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2), i3 = ind(level + 3), i4 = ind(level + 4)
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2), i3 = ind(level + 3)
     const rating = Math.min(5, Math.max(0, props.rating as number))
     const stars = Array.from({ length: 5 }).map((_, idx) => {
       const filled = idx < rating
-      return `${i2}<svg viewBox="0 0 24 24" className="w-3 h-3" fill="${filled ? "#F59E0B" : "none"}" stroke="${filled ? "#F59E0B" : "#D1D5DB"}" strokeWidth={1.5}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>`
+      return `${i3}<svg viewBox="0 0 24 24" style={{ width: 10, height: 10, flexShrink: 0 }} fill="${filled ? "#F59E0B" : "none"}" stroke="${filled ? "#F59E0B" : "#D1D5DB"}" strokeWidth={1.5}><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>`
     }).join("\n")
     const badge = (props.badge as string)
-      ? `\n${i2}<span className="absolute top-2 left-2 text-white text-[10px] font-bold px-2 py-0.5 rounded-full" style={{ background: "#0068FF" }}>${props.badge}</span>`
+      ? `\n${i2}<span style={{ position: "absolute", top: 8, left: 8, color: "white", fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 9999, background: "#0068FF" }}>${props.badge}</span>`
       : ""
     const origPrice = (props.originalPrice as string)
-      ? `\n${i4}<span className="text-[11px] line-through ml-1.5 text-gray-400">${props.originalPrice}</span>`
+      ? `\n${i3}<span style={{ fontSize: 10, textDecoration: "line-through", color: "#9CA3AF" }}>${props.originalPrice}</span>`
       : ""
     return [
-      `${i0}<div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-black/5">`,
-      `${i1}<div className="relative overflow-hidden" style={{ aspectRatio: "4/3" }}>`,
-      `${i2}<img src="${props.imageSrc}" alt="${props.name}" className="w-full h-full object-cover" />${badge}`,
+      `${i0}<div style={{ background: "white", borderRadius: 16, overflow: "hidden", border: "1px solid rgba(0,0,0,0.06)", boxShadow: "0 1px 3px rgba(0,0,0,0.06)" }}>`,
+      `${i1}<div style={{ position: "relative", overflow: "hidden", aspectRatio: "4/3" }}>`,
+      `${i2}<img src="${props.imageSrc}" alt="${props.name}" style={{ width: "100%", height: "100%", objectFit: "cover" }} />${badge}`,
       `${i1}</div>`,
-      `${i1}<div className="p-3">`,
-      `${i2}<p className="text-[13px] font-semibold truncate mb-1.5 text-gray-900">${props.name}</p>`,
-      `${i2}<div className="flex items-center gap-0.5 mb-2">`,
+      `${i1}<div style={{ padding: 10 }}>`,
+      `${i2}<p style={{ fontSize: 12, fontWeight: 600, color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginBottom: 4 }}>${props.name}</p>`,
+      `${i2}<div style={{ display: "flex", alignItems: "center", gap: 2, marginBottom: 6 }}>`,
       stars,
       `${i2}</div>`,
-      `${i2}<div className="flex items-end justify-between">`,
-      `${i3}<div>`,
-      `${i4}<span className="text-[15px] font-bold text-[#0068FF]">${props.price}</span>${origPrice}`,
+      `${i2}<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4 }}>`,
+      `${i3}<div style={{ minWidth: 0, flex: 1 }}>`,
+      `${i3}<span style={{ fontSize: 13, fontWeight: 700, color: "#0068FF", display: "block" }}>${props.price}</span>${origPrice}`,
       `${i3}</div>`,
-      `${i3}<button className="text-white text-[12px] font-semibold px-3 py-1.5 rounded-lg" style={{ background: "#0068FF" }}>Thêm</button>`,
+      `${i3}<button style={{ background: "linear-gradient(135deg, #0068FF, #0084FF)", color: "white", fontSize: 14, fontWeight: 700, width: 28, height: 28, borderRadius: 8, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer" }}>+</button>`,
       `${i2}</div>`,
       `${i1}</div>`,
       `${i0}</div>`,
@@ -1805,22 +1888,33 @@ const tabsDef: ComponentDefinition = {
       </Tabs>
     )
   },
-  toJSX: (props, renderChildren, level) => {
+  toJSX: (props, renderChildren, level, nodeId) => {
     const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
     const hasTab3 = Boolean(props.tab3Label as string)
+    const safeId = nodeId ? nodeId.replace(/[^a-zA-Z0-9]/g, "_") : "tabs"
+    const varName = `activeTab_${safeId}`
+    const setter = `set${varName.charAt(0).toUpperCase()}${varName.slice(1)}`
+    const defaultActive = (props.activeTab as string) ?? "1"
     const children = renderChildren(level + 2)
-    const tab3Trigger = hasTab3 ? `\n${i2}<TabsTrigger value="3">${props.tab3Label}</TabsTrigger>` : ""
-    const tab3Content = hasTab3 ? `\n${i1}<TabsContent value="3" />` : ""
+    const tabLabels = [props.tab1Label as string, props.tab2Label as string, hasTab3 ? props.tab3Label as string : null].filter(Boolean) as string[]
+    const tabBtns = tabLabels.map((label, idx) => {
+      const key = String(idx + 1)
+      return `${i2}<button onClick={() => ${setter}("${key}")} style={{ flex: 1, padding: "10px 4px", fontSize: 13, background: "none", border: "none", cursor: "pointer", fontWeight: ${varName} === "${key}" ? 600 : 500, color: ${varName} === "${key}" ? "#0068FF" : "#6B7280", borderBottom: ${varName} === "${key}" ? "2px solid #0068FF" : "2px solid transparent" }}>${label}</button>`
+    }).join("\n")
+    const tabContents = tabLabels.map((_, idx) => {
+      const key = String(idx + 1)
+      const content = key === defaultActive && children ? children : `${i2}{/* Nội dung Tab ${key} */}`
+      return `${i1}{${varName} === "${key}" && (\n${i2}<>\n${content}\n${i2}</>\n${i1})}`
+    }).join("\n")
     return [
-      `${i0}<Tabs defaultValue="${props.activeTab}">`,
-      `${i1}<TabsList>`,
-      `${i2}<TabsTrigger value="1">${props.tab1Label}</TabsTrigger>`,
-      `${i2}<TabsTrigger value="2">${props.tab2Label}</TabsTrigger>${tab3Trigger}`,
-      `${i1}</TabsList>`,
-      `${i1}<TabsContent value="${props.activeTab}">`,
-      children ?? `${i2}{/* content */}`,
-      `${i1}</TabsContent>${tab3Content}`,
-      `${i0}</Tabs>`,
+      `${i0}<div style={{ display: "flex", flexDirection: "column", width: "100%" }}>`,
+      `${i1}<div style={{ display: "flex", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>`,
+      tabBtns,
+      `${i1}</div>`,
+      `${i1}<div style={{ paddingTop: 12 }}>`,
+      tabContents,
+      `${i1}</div>`,
+      `${i0}</div>`,
     ].join("\n")
   },
 }
@@ -1866,17 +1960,15 @@ const selectFieldDef: ComponentDefinition = {
   toJSX: (props, _renderChildren, level) => {
     const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
     const options = (props.options as string).split(",").map((o) => o.trim()).filter(Boolean)
-    const optItems = options.map((o) => `${i2}<SelectItem value="${o}">${o}</SelectItem>`).join("\n")
-    const req = props.required ? " required" : ""
+    const optItems = options.map((o) => `${i2}<option value="${o}">${o}</option>`).join("\n")
+    const req = props.required ? ` required` : ""
     return [
-      `${i0}<div className="flex flex-col gap-1.5"${req}>`,
-      `${i1}<label className="text-sm font-medium text-gray-600">${props.label}</label>`,
-      `${i1}<Select>`,
-      `${i2}<SelectTrigger><SelectValue placeholder="${props.placeholder}" /></SelectTrigger>`,
-      `${i2}<SelectContent>`,
+      `${i0}<div style={{ display: "flex", flexDirection: "column", gap: 6 }}>`,
+      `${i1}<label style={{ fontSize: 13, fontWeight: 500, color: "#6B7280" }}>${props.label}</label>`,
+      `${i1}<select style={{ height: 40, borderRadius: 8, border: "1px solid #E5E7EB", padding: "0 12px", fontSize: 14, color: "#111827", background: "white", outline: "none" }}${req}>`,
+      `${i2}<option value="">${props.placeholder}</option>`,
       optItems,
-      `${i2}</SelectContent>`,
-      `${i1}</Select>`,
+      `${i1}</select>`,
       `${i0}</div>`,
     ].join("\n")
   },
@@ -1928,20 +2020,20 @@ const bottomSheetDef: ComponentDefinition = {
   ),
   toJSX: (props, renderChildren, level) => {
     const i0 = ind(level), i1 = ind(level + 1)
-    const handle = props.showHandle
-      ? `\n${i1}<div className="w-9 h-1 rounded-full bg-zinc-200 mx-auto mb-3" />`
+    const handle = (props.showHandle as boolean)
+      ? `\n${i1}<div style={{ width: 36, height: 4, borderRadius: 9999, background: "#E5E7EB", margin: "0 auto 12px" }} />`
       : ""
-    const title = props.title ? `\n${i1}<h3 className="text-base font-bold mb-1">${props.title}</h3>` : ""
-    const desc = props.description ? `\n${i1}<p className="text-sm text-gray-500 mb-3">${props.description}</p>` : ""
+    const title = (props.title as string)
+      ? `\n${i1}<h3 style={{ fontSize: 15, fontWeight: 700, color: "#111827", marginBottom: 4 }}>${props.title}</h3>`
+      : ""
+    const desc = (props.description as string)
+      ? `\n${i1}<p style={{ fontSize: 13, color: "#6B7280", marginBottom: 12 }}>${props.description}</p>`
+      : ""
     const children = renderChildren(level + 1)
     return [
-      `${i0}<Sheet>`,
-      `${i1}<SheetContent side="bottom">`,
-      `${i1}<SheetHeader>${handle}${title}${desc}`,
-      `${i1}</SheetHeader>`,
+      `${i0}<div style={{ display: "flex", flexDirection: "column", width: "100%", background: "white", paddingTop: 8, paddingBottom: 16, paddingLeft: 16, paddingRight: 16, borderRadius: "16px 16px 0 0", boxShadow: "0 -4px 24px rgba(0,0,0,0.10)" }}>${handle}${title}${desc}`,
       children ?? "",
-      `${i1}</SheetContent>`,
-      `${i0}</Sheet>`,
+      `${i0}</div>`,
     ].join("\n")
   },
 }
@@ -1999,21 +2091,122 @@ const modalCardDef: ComponentDefinition = {
   ),
   toJSX: (props, renderChildren, level) => {
     const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
-    const closeBtn = props.showClose
-      ? `\n${i2}<DialogClose asChild><Button variant="ghost" size="icon"><XIcon /></Button></DialogClose>`
+    const closeBtn = (props.showClose as boolean)
+      ? `\n${i2}<span style={{ fontSize: 20, color: "#9CA3AF", cursor: "pointer", flexShrink: 0, marginLeft: 8 }}>✕</span>`
       : ""
-    const desc = props.description ? `\n${i2}<DialogDescription>${props.description}</DialogDescription>` : ""
+    const desc = (props.description as string)
+      ? `\n${i2}<p style={{ fontSize: 13, color: "#6B7280", marginTop: 2 }}>${props.description}</p>`
+      : ""
     const children = renderChildren(level + 2)
     return [
-      `${i0}<Dialog>`,
-      `${i1}<DialogContent>`,
-      `${i2}<DialogHeader>`,
-      `${i2}<DialogTitle>${props.title}</DialogTitle>${desc}`,
-      `${i2}</DialogHeader>${closeBtn}`,
+      `${i0}<div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: 16, background: "rgba(0,0,0,0.35)", borderRadius: 24 }}>`,
+      `${i1}<div style={{ background: "white", width: "100%", display: "flex", flexDirection: "column", gap: 8, borderRadius: 20, padding: 20, boxShadow: "0 20px 48px rgba(0,0,0,0.2)" }}>`,
+      `${i2}<div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>`,
+      `${i2}<div style={{ flex: 1, minWidth: 0 }}>`,
+      `${i2}<h3 style={{ fontSize: 15, fontWeight: 700, color: "#111827", margin: 0 }}>${props.title}</h3>${desc}`,
+      `${i2}</div>${closeBtn}`,
+      `${i2}</div>`,
       children ?? "",
-      `${i1}</DialogContent>`,
-      `${i0}</Dialog>`,
+      `${i1}</div>`,
+      `${i0}</div>`,
     ].join("\n")
+  },
+}
+
+// ─── Carousel ─────────────────────────────────────────────────────────────────
+
+const carouselDef: ComponentDefinition = {
+  type: "Carousel",
+  label: "Carousel",
+  icon: RiSlideshowLine,
+  description: "Trình chiếu ảnh trượt ngang với dots indicator",
+  category: "ui",
+  acceptsChildren: false,
+  zmpImports: [],
+  defaultProps: {
+    imageCount: "3",
+    image1: "https://placehold.co/600x300/0068FF/white?text=Slide+1",
+    image2: "https://placehold.co/600x300/0084FF/white?text=Slide+2",
+    image3: "https://placehold.co/600x300/5BA3FF/white?text=Slide+3",
+    image4: "https://placehold.co/600x300/89BFFF/white?text=Slide+4",
+    image5: "https://placehold.co/600x300/B8D9FF/white?text=Slide+5",
+    height: "200px",
+    showDots: true,
+    showArrows: false,
+  },
+  propSchema: {
+    imageCount: { label: "Số slides", type: "select", defaultValue: "3", options: ["2", "3", "4", "5"] },
+    image1: { label: "Slide 1 URL", type: "string", defaultValue: "https://placehold.co/600x300" },
+    image2: { label: "Slide 2 URL", type: "string", defaultValue: "https://placehold.co/600x300" },
+    image3: { label: "Slide 3 URL", type: "string", defaultValue: "https://placehold.co/600x300" },
+    image4: { label: "Slide 4 URL", type: "string", defaultValue: "https://placehold.co/600x300" },
+    image5: { label: "Slide 5 URL", type: "string", defaultValue: "https://placehold.co/600x300" },
+    height: { label: "Chiều cao", type: "string", defaultValue: "200px" },
+    showDots: { label: "Hiện dots", type: "boolean", defaultValue: true },
+    showArrows: { label: "Hiện arrows", type: "boolean", defaultValue: false },
+  },
+  propGroups: [
+    { label: "Slide 1", keys: ["image1"], defaultExpanded: true },
+    { label: "Slide 2", keys: ["image2"], defaultExpanded: false, showWhen: (p) => parseInt(p.imageCount as string) >= 2 },
+    { label: "Slide 3", keys: ["image3"], defaultExpanded: false, showWhen: (p) => parseInt(p.imageCount as string) >= 3 },
+    { label: "Slide 4", keys: ["image4"], defaultExpanded: false, showWhen: (p) => parseInt(p.imageCount as string) >= 4 },
+    { label: "Slide 5", keys: ["image5"], defaultExpanded: false, showWhen: (p) => parseInt(p.imageCount as string) >= 5 },
+  ],
+  renderer: (props) => {
+    const count = parseInt(props.imageCount as string)
+    const images = [props.image1, props.image2, props.image3, props.image4, props.image5].slice(0, count) as string[]
+    return (
+      <div style={{ position: "relative", borderRadius: tk.radius.lg, overflow: "hidden" }}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={images[0] ?? "https://placehold.co/600x300"}
+          alt="Slide 1"
+          style={{ width: "100%", height: props.height as string, objectFit: "cover", display: "block" }}
+        />
+        {(props.showArrows as boolean) && (
+          <>
+            <div style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <RiArrowLeftSLine style={{ fontSize: 18, color: "white" }} />
+            </div>
+            <div style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", width: 28, height: 28, borderRadius: "50%", background: "rgba(0,0,0,0.4)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <RiArrowRightSLine style={{ fontSize: 18, color: "white" }} />
+            </div>
+          </>
+        )}
+        {(props.showDots as boolean) && (
+          <div style={{ position: "absolute", bottom: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5 }}>
+            {images.map((_, i) => (
+              <div key={i} style={{ width: i === 0 ? 16 : 6, height: 6, borderRadius: 3, background: i === 0 ? tk.accent : "rgba(255,255,255,0.6)", transition: "width 0.2s" }} />
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  },
+  toJSX: (props, _renderChildren, level) => {
+    const count = parseInt(props.imageCount as string)
+    const images = [props.image1, props.image2, props.image3, props.image4, props.image5].slice(0, count) as string[]
+    const height = props.height as string
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2)
+
+    const imgLines = images.map((src, idx) =>
+      `${i2}<img src="${src}" alt="Slide ${idx + 1}" style={{ width: "100%", height: "${height}", objectFit: "cover", flexShrink: 0, scrollSnapAlign: "start" }} />`
+    ).join("\n")
+
+    const dotsLines = !(props.showDots as boolean) ? "" : [
+      `${i1}<div style={{ position: "absolute", bottom: 8, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 5 }}>`,
+      ...images.map(() => `${i2}<div style={{ width: 6, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.6)" }} />`),
+      `${i1}</div>`,
+    ].join("\n")
+
+    return [
+      `${i0}<div style={{ position: "relative", borderRadius: 12, overflow: "hidden" }}>`,
+      `${i1}<div style={{ display: "flex", overflowX: "scroll", scrollSnapType: "x mandatory", scrollbarWidth: "none" }}>`,
+      imgLines,
+      `${i1}</div>`,
+      dotsLines,
+      `${i0}</div>`,
+    ].filter(Boolean).join("\n")
   },
 }
 
@@ -2054,6 +2247,7 @@ export const registry: Record<string, ComponentDefinition> = {
   HeroSection: heroSectionDef,
   Tabs: tabsDef,
   SelectField: selectFieldDef,
+  Carousel: carouselDef,
   BottomSheet: bottomSheetDef,
   ModalCard: modalCardDef,
 }
