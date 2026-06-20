@@ -242,19 +242,15 @@ function findBottomNavProps(pages: PageSchema[]): Record<string, unknown> | null
 }
 
 function generateBottomNavFile(props: Record<string, unknown>): string {
-  const tabCount = parseInt((props.tabCount as string) ?? "3")
   const tabs = [
     { key: "1", label: (props.tab1Label as string) ?? "", icon: (props.tab1Icon as string) ?? "", route: (props.tab1Route as string) ?? "" },
     { key: "2", label: (props.tab2Label as string) ?? "", icon: (props.tab2Icon as string) ?? "", route: (props.tab2Route as string) ?? "" },
     { key: "3", label: (props.tab3Label as string) ?? "", icon: (props.tab3Icon as string) ?? "", route: (props.tab3Route as string) ?? "" },
-    { key: "4", label: (props.tab4Label as string) ?? "", icon: (props.tab4Icon as string) ?? "", route: (props.tab4Route as string) ?? "" },
-    { key: "5", label: (props.tab5Label as string) ?? "", icon: (props.tab5Icon as string) ?? "", route: (props.tab5Route as string) ?? "" },
-  ].slice(0, tabCount).filter((tab) => tab.label || tab.icon || tab.route)
+  ].filter((tab) => tab.label || tab.icon || tab.route)
 
   const tabsJson = JSON.stringify(tabs, null, 2)
 
   return `import { useNavigate } from "zmp-ui"
-import { useState, useEffect } from "react"
 import { RiHomeLine, RiSearchLine, RiUserLine, RiStarLine, RiShoppingCartLine, RiHeartLine, RiSettings3Line } from "react-icons/ri"
 
 const iconMap = {
@@ -271,37 +267,19 @@ const tabs = ${tabsJson}
 
 export default function BottomNavigation() {
   const navigate = useNavigate()
-  const [activePath, setActivePath] = useState(tabs[0]?.route ?? "/")
-
-  useEffect(() => {
-    setActivePath(window.location.pathname)
-  }, [])
-
-  function handleTab(route: string) {
-    if (!route) return
-    setActivePath(route)
-    navigate(route)
-  }
 
   return (
-    <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 60, display: "flex", alignItems: "stretch", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", borderTop: "1px solid rgba(0,0,0,0.06)", zIndex: 50 }}>
+    <div className="fixed bottom-0 left-0 w-full flex items-center justify-around bg-white border-t border-gray-200 h-14 px-2 shrink-0">
       {tabs.map((tab) => {
-        const isActive = activePath === tab.route
         const IconComp = iconMap[tab.icon as keyof typeof iconMap]
         return (
           <button
             key={tab.key}
-            style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, position: "relative", border: "none", background: "none", cursor: "pointer", padding: 0 }}
-            onClick={() => handleTab(tab.route)}
+            className="flex flex-col items-center gap-0.5 flex-1"
+            onClick={() => { if (tab.route) navigate(tab.route) }}
           >
-            {isActive && (
-              <div style={{ position: "absolute", top: 0, left: "50%", transform: "translateX(-50%)", width: 24, height: 3, borderRadius: 3, background: "#0068FF" }} />
-            )}
-            {IconComp
-              ? <IconComp style={{ fontSize: 22, color: isActive ? "#0068FF" : "#9CA3AF", transition: "color 0.15s" }} />
-              : <span style={{ fontSize: 20, lineHeight: 1 }}>{tab.icon}</span>
-            }
-            <span style={{ fontSize: 10, fontWeight: isActive ? 600 : 500, color: isActive ? "#0068FF" : "#9CA3AF", transition: "color 0.15s" }}>{tab.label}</span>
+            {IconComp ? <IconComp style={{ fontSize: 22, color: "#6B7280" }} /> : <span className="text-xl leading-none">{tab.icon}</span>}
+            <span className="text-[10px] font-medium text-gray-500">{tab.label}</span>
           </button>
         )
       })}
