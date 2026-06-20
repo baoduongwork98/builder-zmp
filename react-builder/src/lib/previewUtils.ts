@@ -29,3 +29,13 @@ export function findGlobalBottomNav(
   }
   return null
 }
+
+export function getBottomNavRoutes(props: Record<string, unknown>): Set<string> {
+  const tabCount = parseInt((props.tabCount as string) ?? "3")
+  const routes = new Set<string>()
+  for (let i = 1; i <= tabCount; i++) {
+    const route = props[`tab${i}Route`] as string | undefined
+    if (route) routes.add(route)
+  }
+  return routes
+}

@@ -9,7 +9,7 @@ import { useIsDraggingAny } from "./BuilderDnd"
 import { TemplateModal } from "./TemplateModal"
 import { cn } from "@/lib/utils"
 import { ComponentNode } from "@/types/builder"
-import { findGlobalBottomNav } from "@/lib/previewUtils"
+import { findGlobalBottomNav, getBottomNavRoutes } from "@/lib/previewUtils"
 
 const VIEWPORT_WIDTH: Record<string, string> = {
   desktop: "100%",
@@ -88,7 +88,9 @@ export function Canvas() {
   const isDraggingAny = useIsDraggingAny()
 
   const bottomNavEntry = findGlobalBottomNav(allPages)
-  const bottomNavContent = bottomNavEntry ? (
+  const currentPagePath = currentPage?.path ?? "/"
+  const showBottomNav = !!bottomNavEntry && getBottomNavRoutes(bottomNavEntry.node.props).has(currentPagePath)
+  const bottomNavContent = showBottomNav ? (
     <CanvasNode
       id={bottomNavEntry.node.id}
       nodes={bottomNavEntry.nodes}

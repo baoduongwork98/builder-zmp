@@ -67,6 +67,14 @@ export interface PropSchema {
   options?: string[]
 }
 
+export interface PropGroup {
+  label: string
+  keys: string[]
+  defaultExpanded?: boolean
+  showWhen?: (props: Record<string, unknown>) => boolean
+  preview?: (props: Record<string, unknown>) => string
+}
+
 /** prop key → variable name */
 export type PropBindings = Record<string, string>
 
@@ -113,8 +121,10 @@ export interface ComponentDefinition {
   toJSX?: (
     props: Record<string, unknown>,
     renderChildren: (level: number) => string,
-    level: number
+    level: number,
+    nodeId?: string
   ) => string
+  propGroups?: PropGroup[]
 }
 
 export interface PageSchema {

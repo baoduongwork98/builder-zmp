@@ -3,8 +3,8 @@
 import { useCallback, useState } from "react"
 import { useBuilderStore, selectCurrentPage } from "@/store/builderStore"
 import { registry } from "@/registry/index"
-import { PageSchema, PropSchema, Action, NodeEvents, Variable, ListBinding } from "@/types/builder"
-import { RiLinkM, RiCloseLine } from "react-icons/ri"
+import { PageSchema, PropSchema, PropGroup, Action, NodeEvents, Variable, ListBinding } from "@/types/builder"
+import { RiLinkM, RiCloseLine, RiArrowDownSLine } from "react-icons/ri"
 
 // ─── PropEditor ───────────────────────────────────────────────────────────────
 
@@ -117,6 +117,68 @@ function PropEditor({ propKey, schema, value, onChange, pages, boundVariable, al
             </div>
           )}
         </>
+      )}
+    </div>
+  )
+}
+
+// ─── PropGroupCard ────────────────────────────────────────────────────────────
+
+interface PropGroupCardProps {
+  group: PropGroup
+  nodeProps: Record<string, unknown>
+  propSchema: Record<string, PropSchema>
+  nodeBindings?: Record<string, string>
+  allVariables: Variable[]
+  pages: PageSchema[]
+  onChange: (key: string, value: unknown) => void
+  onBindVariable: (propKey: string, varName: string | null) => void
+}
+
+function PropGroupCard({ group, nodeProps, propSchema, nodeBindings, allVariables, pages, onChange, onBindVariable }: PropGroupCardProps) {
+  const [expanded, setExpanded] = useState(group.defaultExpanded ?? false)
+
+  if (group.showWhen && !group.showWhen(nodeProps)) return null
+
+  const preview = group.preview?.(nodeProps)
+
+  return (
+    <div className="mb-1.5 rounded-xl overflow-hidden border border-zinc-200">
+      <button
+        className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors ${expanded ? "bg-zinc-100/80" : "bg-zinc-50 hover:bg-zinc-100/60"}`}
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span className="text-[11px] font-semibold text-zinc-600">{group.label}</span>
+        <div className="flex items-center gap-1.5 min-w-0">
+          {!expanded && preview && (
+            <span className="text-[11px] text-zinc-400 truncate max-w-[96px]">{preview}</span>
+          )}
+          <RiArrowDownSLine
+            size={14}
+            className={`shrink-0 text-zinc-400 transition-transform duration-200 ${expanded ? "" : "-rotate-90"}`}
+          />
+        </div>
+      </button>
+      {expanded && (
+        <div className="px-3 pt-3 pb-0.5 border-t border-zinc-100">
+          {group.keys.map((key) => {
+            const schema = propSchema[key]
+            if (!schema) return null
+            return (
+              <PropEditor
+                key={key}
+                propKey={key}
+                schema={schema}
+                value={nodeProps[key]}
+                onChange={onChange}
+                pages={pages}
+                boundVariable={nodeBindings?.[key]}
+                allVariables={allVariables}
+                onBindVariable={onBindVariable}
+              />
+            )
+          })}
+        </div>
       )}
     </div>
   )
@@ -445,6 +507,18 @@ export function PropertiesPanel() {
   const hasEvents = node.events && Object.keys(node.events).length > 0
   const hasBindings = (node.bindings && Object.keys(node.bindings).length > 0) || !!node.listBinding || !!node.visibleWhen
 
+  // Compute grouped/ungrouped prop keys for rendering
+  const allPropKeys = Object.keys(def.propSchema)
+  let beforeKeys: string[] = []
+  let afterKeys: string[] = []
+  if (def.propGroups) {
+    const groupedKeys = new Set(def.propGroups.flatMap((g) => g.keys))
+    const firstGroupedIdx = allPropKeys.findIndex((k) => groupedKeys.has(k))
+    const lastGroupedIdx = allPropKeys.reduce((acc, k, i) => (groupedKeys.has(k) ? i : acc), -1)
+    beforeKeys = firstGroupedIdx === -1 ? allPropKeys : allPropKeys.slice(0, firstGroupedIdx)
+    afterKeys = lastGroupedIdx === -1 ? [] : allPropKeys.slice(lastGroupedIdx + 1)
+  }
+
   return (
     <div className="w-64 border-l border-zinc-200 bg-white flex flex-col overflow-hidden">
       <div className="px-4 py-3 border-b border-zinc-100 flex items-center justify-between shrink-0">
@@ -467,15 +541,53 @@ export function PropertiesPanel() {
       <div className="overflow-y-auto flex-1 scrollbar-hide">
         {activeTab === "props" && (
           <div className="p-4">
-            {Object.entries(def.propSchema).map(([key, schema]) => (
-              <PropEditor
-                key={key} propKey={key} schema={schema} value={node.props[key]}
-                onChange={handleChange} pages={pages}
-                boundVariable={node.bindings?.[key]}
-                allVariables={accessibleVars}
-                onBindVariable={handleBindVariable}
-              />
-            ))}
+            {def.propGroups ? (
+              <>
+                {beforeKeys.map((key) => (
+                  <PropEditor
+                    key={key} propKey={key} schema={def.propSchema[key]} value={node.props[key]}
+                    onChange={handleChange} pages={pages}
+                    boundVariable={node.bindings?.[key]}
+                    allVariables={accessibleVars}
+                    onBindVariable={handleBindVariable}
+                  />
+                ))}
+                <div className="mb-3">
+                  {def.propGroups.map((group) => (
+                    <PropGroupCard
+                      key={group.label}
+                      group={group}
+                      nodeProps={node.props}
+                      propSchema={def.propSchema}
+                      nodeBindings={node.bindings}
+                      allVariables={accessibleVars}
+                      pages={pages}
+                      onChange={handleChange}
+                      onBindVariable={handleBindVariable}
+                    />
+                  ))}
+                </div>
+                {afterKeys.map((key) => (
+                  <PropEditor
+                    key={key} propKey={key} schema={def.propSchema[key]} value={node.props[key]}
+                    onChange={handleChange} pages={pages}
+                    boundVariable={node.bindings?.[key]}
+                    allVariables={accessibleVars}
+                    onBindVariable={handleBindVariable}
+                  />
+                ))}
+              </>
+            ) : (
+              Object.entries(def.propSchema).map(([key, schema]) => (
+                <PropEditor
+                  key={key} propKey={key} schema={schema} value={node.props[key]}
+                  onChange={handleChange} pages={pages}
+                  boundVariable={node.bindings?.[key]}
+                  allVariables={accessibleVars}
+                  onBindVariable={handleBindVariable}
+                />
+              ))
+            )}
           </div>
         )}
         {activeTab === "events" && (

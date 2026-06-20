@@ -2,22 +2,24 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { listenPreviewState, PreviewSnapshot } from "@/lib/previewChannel"
-import { readFromLocalStorage, findGlobalBottomNav } from "@/lib/previewUtils"
+import { readFromLocalStorage, findGlobalBottomNav, getBottomNavRoutes } from "@/lib/previewUtils"
 import { PhoneMockup } from "@/components/builder/PhoneMockup"
 import { PreviewContext, PreviewNode } from "@/components/preview/PreviewRenderer"
 
 const LAYOUT_NODE_TYPES = new Set(["ZaloBottomNav"])
 
 export default function PreviewPage() {
-  const [snapshot, setSnapshot] = useState<PreviewSnapshot | null>(() => {
-    if (typeof window === "undefined") return null
-    return readFromLocalStorage()
-  })
-  const [currentPageId, setCurrentPageId] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null
+  const [snapshot, setSnapshot] = useState<PreviewSnapshot | null>(null)
+  const [currentPageId, setCurrentPageId] = useState<string | null>(null)
+
+  // Load from localStorage after hydration (client only)
+  useEffect(() => {
     const initial = readFromLocalStorage()
-    return initial?.pages[0]?.id ?? null
-  })
+    if (initial) {
+      setSnapshot(initial)
+      setCurrentPageId(initial.pages[0]?.id ?? null)
+    }
+  }, [])
 
   // Live sync from builder via BroadcastChannel
   useEffect(() => {
@@ -42,6 +44,7 @@ export default function PreviewPage() {
   const currentPage = snapshot?.pages.find((p) => p.id === currentPageId)
   const currentPath = currentPage?.path ?? "/"
   const bottomNavEntry = findGlobalBottomNav(snapshot?.pages ?? [])
+  const showBottomNav = !!bottomNavEntry && getBottomNavRoutes(bottomNavEntry.node.props).has(currentPath)
 
   const contentNodeIds = (currentPage?.rootIds ?? []).filter(
     (id) => !LAYOUT_NODE_TYPES.has(currentPage!.nodes[id]?.type)
@@ -60,7 +63,7 @@ export default function PreviewPage() {
           <PhoneMockup
             themeColor={snapshot.appConfig.themeColor}
             bottomNav={
-              bottomNavEntry ? (
+              showBottomNav ? (
                 <PreviewNode
                   id={bottomNavEntry.node.id}
                   nodes={bottomNavEntry.nodes}
