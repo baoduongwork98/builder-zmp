@@ -2436,6 +2436,112 @@ const accordionDef: ComponentDefinition = {
   },
 }
 
+// ─── ModalDialog ──────────────────────────────────────────────────────────────
+
+const modalDialogDef: ComponentDefinition = {
+  type: "ModalDialog",
+  label: "Modal Dialog",
+  icon: RiWindowLine,
+  description: "Modal hoặc bottom sheet có nút trigger và open/close state — kéo nội dung vào bên trong",
+  category: "ui",
+  acceptsChildren: true,
+  zmpImports: [],
+  defaultProps: {
+    type: "modal",
+    title: "Xác nhận",
+    triggerLabel: "Mở",
+    triggerVariant: "primary",
+    overlayClose: true,
+  },
+  propSchema: {
+    type:           { label: "Kiểu",              type: "select",  defaultValue: "modal",   options: ["modal", "bottomSheet"] },
+    title:          { label: "Tiêu đề",           type: "string",  defaultValue: "Xác nhận" },
+    triggerLabel:   { label: "Nút trigger",       type: "string",  defaultValue: "Mở" },
+    triggerVariant: { label: "Kiểu nút",          type: "select",  defaultValue: "primary", options: ["primary", "secondary", "tertiary"] },
+    overlayClose:   { label: "Click ngoài đóng", type: "boolean", defaultValue: true },
+  },
+  renderer: (props, children) => {
+    const isBottomSheet = props.type === "bottomSheet"
+    const variant = props.triggerVariant as string
+    const btnStyle: React.CSSProperties =
+      variant === "primary"
+        ? { background: tk.accentGrad, color: "white", boxShadow: tk.accentShadow }
+        : variant === "secondary"
+        ? { background: tk.surface, color: tk.accent, border: "1.5px solid rgba(0,104,255,0.25)" }
+        : { background: "transparent", color: tk.accent }
+
+    return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Trigger button */}
+        <button style={{ borderRadius: tk.radius.md, padding: "12px 20px", fontSize: 15, fontWeight: 600, border: "none", cursor: "default", letterSpacing: "-0.1px", ...btnStyle }}>
+          {props.triggerLabel as string}
+        </button>
+        {/* Inline modal preview — always open in canvas */}
+        <div style={{ border: "2px dashed rgba(0,104,255,0.15)", borderRadius: isBottomSheet ? "16px 16px 0 0" : 16, overflow: "hidden", opacity: 0.9 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 16px", background: "rgba(0,104,255,0.03)", borderBottom: "1px solid rgba(0,104,255,0.08)" }}>
+            <span style={{ fontWeight: 600, fontSize: 14, color: tk.textPrimary }}>{props.title as string}</span>
+            <RiCloseCircleLine style={{ fontSize: 18, color: tk.textTertiary }} />
+          </div>
+          <div style={{ padding: "12px 16px", background: "white" }}>
+            {children ?? (
+              <div
+                className="flex items-center justify-center py-4 text-xs rounded-lg"
+                style={{ border: "2px dashed rgba(0,104,255,0.2)", color: "rgba(0,104,255,0.4)" }}
+              >
+                Thả nội dung vào đây
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  },
+  toJSX: (props, renderChildren, level, nodeId) => {
+    const safeId = (nodeId ?? `m${level}`).replace(/[^a-zA-Z0-9]/g, "_")
+    const stateVar = `isModal_${safeId}_Open`
+    const setter = `set${stateVar.charAt(0).toUpperCase()}${stateVar.slice(1)}`
+    const i0 = ind(level), i1 = ind(level + 1), i2 = ind(level + 2), i3 = ind(level + 3), i4 = ind(level + 4)
+
+    const isBottomSheet = props.type === "bottomSheet"
+    const overlayAlign = isBottomSheet ? `"flex-end"` : `"center"`
+    const sheetRadius = isBottomSheet ? `"16px 16px 0 0"` : `16`
+    const overlayPad = isBottomSheet ? 0 : 16
+
+    const variant = props.triggerVariant as string
+    const btnStyle =
+      variant === "primary"
+        ? `background: "linear-gradient(135deg, #0068FF, #0084FF)", color: "white", boxShadow: "0 4px 12px rgba(0,104,255,0.28)"`
+        : variant === "secondary"
+        ? `background: "white", color: "#0068FF", border: "1.5px solid rgba(0,104,255,0.25)"`
+        : `background: "transparent", color: "#0068FF"`
+
+    const overlayClickAttr = (props.overlayClose as boolean) ? `onClick={() => ${setter}(false)} ` : ""
+    const children = renderChildren(level + 4)
+    const childContent = children || `${i4}{/* Nội dung modal */}`
+
+    return [
+      `${i0}<>`,
+      `${i1}<button onClick={() => ${setter}(true)} style={{ borderRadius: 12, padding: "12px 20px", fontSize: 15, fontWeight: 600, border: "none", cursor: "pointer", ${btnStyle} }}>`,
+      `${i2}${props.triggerLabel}`,
+      `${i1}</button>`,
+      `${i1}{${stateVar} && (`,
+      `${i2}<div ${overlayClickAttr}style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 100, display: "flex", alignItems: ${overlayAlign}, padding: ${overlayPad} }}>`,
+      `${i3}<div onClick={e => e.stopPropagation()} style={{ background: "white", borderRadius: ${sheetRadius}, width: "100%", maxHeight: "80vh", overflowY: "auto" }}>`,
+      `${i4}<div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: "1px solid #F3F4F6" }}>`,
+      `${i4}  <span style={{ fontWeight: 600, fontSize: 16, color: "#111827" }}>${props.title}</span>`,
+      `${i4}  <button onClick={() => ${setter}(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 22, color: "#9CA3AF", lineHeight: 1 }}>×</button>`,
+      `${i4}</div>`,
+      `${i4}<div style={{ padding: 20 }}>`,
+      childContent,
+      `${i4}</div>`,
+      `${i3}</div>`,
+      `${i2}</div>`,
+      `${i1})}`,
+      `${i0}</>`,
+    ].join("\n")
+  },
+}
+
 // ─── Registry exports ─────────────────────────────────────────────────────────
 
 export const registry: Record<string, ComponentDefinition> = {
@@ -2476,6 +2582,7 @@ export const registry: Record<string, ComponentDefinition> = {
   Carousel: carouselDef,
   Skeleton: skeletonDef,
   Accordion: accordionDef,
+  ModalDialog: modalDialogDef,
   BottomSheet: bottomSheetDef,
   ModalCard: modalCardDef,
 }

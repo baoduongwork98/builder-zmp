@@ -909,6 +909,13 @@ function collectLocalHooks(
       lines.push(`const [${stateVar}, ${setter}] = useState(${JSON.stringify(node.props.defaultOpen ?? false)})`)
       needsUseState = true
     }
+    if (node.type === "ModalDialog") {
+      const safeId = id.replace(/[^a-zA-Z0-9]/g, "_")
+      const stateVar = `isModal_${safeId}_Open`
+      const setter = `set${stateVar.charAt(0).toUpperCase()}${stateVar.slice(1)}`
+      lines.push(`const [${stateVar}, ${setter}] = useState(false)`)
+      needsUseState = true
+    }
     node.children.forEach(walk)
   }
   rootIds.forEach(walk)
